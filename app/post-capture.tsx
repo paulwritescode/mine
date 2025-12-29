@@ -21,10 +21,10 @@ import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { Colors, Spacing, Typography, TouchTargets } from '@/src/design-system';
-import { MineButton, MineInput, VideoPlayer, MineInputRef } from '@/src/components';
+import { MineButton, MineInput, VideoPlayer, MineInputRef, KeyboardAvoidingContainer } from '@/src/components';
 import { SnippetService } from '@/src/services/SnippetService';
 import { VideoService } from '@/src/services/VideoService';
-import { useSimpleKeyboard } from '@/src/hooks/useSimpleKeyboard';
+import { useKeyboard } from '@/src/hooks/useKeyboard';
 
 export default function PostCapture() {
   const { videoPath, projectId, date } = useLocalSearchParams<{ 
@@ -38,13 +38,10 @@ export default function PostCapture() {
   const [showPreview, setShowPreview] = useState(false);
 
   const noteInputRef = useRef<MineInputRef>(null);
-  const { isVisible: keyboardVisible, dismiss: dismissKeyboard } = useSimpleKeyboard();
+  const { isVisible: keyboardVisible, dismiss: dismissKeyboard } = useKeyboard();
 
   const snippetService = SnippetService.getInstance();
   const videoService = VideoService.getInstance();
-
-  console.log(`📹 [PostCapture] Component mounted with params:`, { videoPath, projectId, date });
-  console.log(`📹 [PostCapture] Keyboard visible: ${keyboardVisible}`);
 
   useEffect(() => {
     // Video processing will happen when user saves
@@ -71,16 +68,12 @@ export default function PostCapture() {
   };
 
   const handleSave = async () => {
-    console.log(`📹 [PostCapture] Save button pressed`);
-    
     if (!videoPath || !projectId) {
-      console.error(`📹 [PostCapture] Missing required information:`, { videoPath, projectId });
       Alert.alert('Error', 'Missing required information');
       return;
     }
 
     // Dismiss keyboard before saving
-    console.log(`📹 [PostCapture] Dismissing keyboard before save`);
     dismissKeyboard();
 
     try {
@@ -136,16 +129,12 @@ export default function PostCapture() {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView 
-        style={styles.content}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      <KeyboardAvoidingContainer
+        containerStyle={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        hasToolbar={false}
+        verticalOffset={0}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
         {/* Video Preview Thumbnail */}
         <View style={styles.videoPreview}>
           <TouchableOpacity
@@ -168,7 +157,6 @@ export default function PostCapture() {
             ref={noteInputRef}
             value={note}
             onChangeText={(text) => {
-              console.log(`📹 [PostCapture] Note text changed, length: ${text.length}`);
               setNote(text);
             }}
             placeholder="What happened in this moment?"
@@ -176,16 +164,11 @@ export default function PostCapture() {
             numberOfLines={4}
             maxLength={500}
             style={styles.noteInput}
-            inputId="note"
             returnKeyType="done"
             autoCapitalize="sentences"
             autoCorrect={true}
             onSubmitEditing={() => {
-              console.log(`📹 [PostCapture] Note input submit editing`);
               dismissKeyboard();
-            }}
-            onFocusChange={(focused, id) => {
-              console.log(`📹 [PostCapture] Note input focus changed: ${focused} for ${id}`);
             }}
           />
           
@@ -236,8 +219,7 @@ export default function PostCapture() {
             </View>
           </View>
         </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingContainer>
 
       {/* Save Button */}
       <View style={styles.footer}>
@@ -259,9 +241,6 @@ export default function PostCapture() {
           autoPlay={true}
         />
       )}
-      
-      {/* Debug Panel - Development Only - Temporarily disabled */}
-      {/* <KeyboardDebugPanel /> */}
     </SafeAreaView>
   );
 }

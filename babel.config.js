@@ -6,6 +6,7 @@ module.exports = function (api) {
       '@babel/preset-typescript',
     ],
     plugins: [
+      'react-native-keyboard-controller/plugin',
       'react-native-reanimated/plugin',
     ],
   };

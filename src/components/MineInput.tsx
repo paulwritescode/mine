@@ -1,8 +1,9 @@
 /**
  * MineInput - Reusable input component following Mine design system
+ * Updated to use modern keyboard handling approach
  */
 
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   TextInput,
   View,
@@ -13,7 +14,6 @@ import {
   TextInputProps,
 } from 'react-native';
 import { Colors, BorderRadius, Spacing, Typography, TouchTargets } from '../design-system';
-import { keyboardDebugger } from '../utils/debugKeyboard';
 
 export interface MineInputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -21,8 +21,6 @@ export interface MineInputProps extends Omit<TextInputProps, 'style'> {
   style?: ViewStyle;
   inputStyle?: TextStyle;
   multiline?: boolean;
-  inputId?: string;
-  onFocusChange?: (focused: boolean, inputId?: string) => void;
 }
 
 export interface MineInputRef {
@@ -37,46 +35,32 @@ export const MineInput = forwardRef<MineInputRef, MineInputProps>(({
   style,
   inputStyle,
   multiline = false,
-  inputId,
   onFocus,
   onBlur,
-  onFocusChange,
   ...textInputProps
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-  console.log(`📝 [MineInput] Rendering input with ID: ${inputId || 'no-id'}, multiline: ${multiline}`);
-
   useImperativeHandle(ref, () => ({
     focus: () => {
-      console.log(`📝 [MineInput] Imperative focus called for: ${inputId || 'no-id'}`);
       inputRef.current?.focus();
     },
     blur: () => {
-      console.log(`📝 [MineInput] Imperative blur called for: ${inputId || 'no-id'}`);
       inputRef.current?.blur();
     },
     isFocused: () => {
-      const focused = isFocused;
-      console.log(`📝 [MineInput] isFocused check for ${inputId || 'no-id'}: ${focused}`);
-      return focused;
+      return isFocused;
     },
   }));
 
   const handleFocus = (e: any) => {
-    console.log(`📝 [MineInput] Focus event for: ${inputId || 'no-id'}`);
-    keyboardDebugger.logFocusChange(inputId || 'no-id', true, { multiline, hasLabel: !!label });
     setIsFocused(true);
-    onFocusChange?.(true, inputId);
     onFocus?.(e);
   };
 
   const handleBlur = (e: any) => {
-    console.log(`📝 [MineInput] Blur event for: ${inputId || 'no-id'}`);
-    keyboardDebugger.logFocusChange(inputId || 'no-id', false, { multiline, hasLabel: !!label });
     setIsFocused(false);
-    onFocusChange?.(false, inputId);
     onBlur?.(e);
   };
 
@@ -110,8 +94,9 @@ export const MineInput = forwardRef<MineInputRef, MineInputProps>(({
           onFocus={handleFocus}
           onBlur={handleBlur}
           multiline={multiline}
-          textAlignVertical={multiline ? 'top' : 'center'}
+          textAlignVertical={multiline ? 'top' : 'center'} // Android compatibility
           placeholderTextColor={Colors.disabled}
+          blurOnSubmit={false} // Prevent focus jumping
           {...textInputProps}
         />
       </View>
@@ -142,13 +127,7 @@ const styles = StyleSheet.create({
   },
   focused: {
     borderColor: Colors.sage,
-    shadowColor: Colors.sage,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    boxShadow: '0px 0px 4px rgba(156, 175, 136, 0.2)',
     elevation: 2,
   },
   error: {

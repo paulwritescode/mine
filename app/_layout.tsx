@@ -70,10 +70,12 @@ export default function RootLayout() {
     );
   }
 
+  // Log the rendering (moved outside JSX)
+  console.log(`🚀 [RootLayout] Rendering app with KeyboardProvider and theme: ${colorScheme}`);
+
   return (
     <KeyboardProvider>
       <DesignThemeProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
-        {console.log(`🚀 [RootLayout] Rendering app with KeyboardProvider and theme: ${colorScheme}`)}
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />

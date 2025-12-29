@@ -2,16 +2,14 @@
  * CreateProject - Project creation screen with design system
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  Platform,
-  KeyboardAvoidingView,
-  ScrollView,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,9 +17,9 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 
 import { Colors, Spacing, Typography, TouchTargets, BorderRadius } from '@/src/design-system';
-import { MineButton, MineInput, MineCard, MineInputRef } from '@/src/components';
+import { MineButton, MineCard, KeyboardAvoidingContainer } from '@/src/components';
 import { ProjectService } from '@/src/services/ProjectService';
-import { useSimpleKeyboard } from '@/src/hooks/useSimpleKeyboard';
+import { useKeyboard } from '@/src/hooks/useKeyboard';
 
 type ProjectType = 'timeline' | 'freestyle';
 
@@ -31,33 +29,24 @@ export default function CreateProject() {
   const [loading, setLoading] = useState(false);
   const [nameError, setNameError] = useState('');
 
-  const projectNameInputRef = useRef<MineInputRef>(null);
-  const { dismiss: dismissKeyboard } = useSimpleKeyboard();
+  const { dismiss: dismissKeyboard } = useKeyboard();
 
   const projectService = ProjectService.getInstance();
 
-  console.log(`🏗️ [CreateProject] Component mounted`);
-
   const validateProjectName = useCallback((name: string): boolean => {
-    console.log(`🏗️ [CreateProject] Validating project name: "${name}"`);
-    
     if (!name.trim()) {
-      console.log(`🏗️ [CreateProject] Validation failed: empty name`);
       setNameError('Project name is required');
       return false;
     }
     if (name.trim().length < 2) {
-      console.log(`🏗️ [CreateProject] Validation failed: too short (${name.trim().length})`);
       setNameError('Project name must be at least 2 characters');
       return false;
     }
     if (name.trim().length > 50) {
-      console.log(`🏗️ [CreateProject] Validation failed: too long (${name.trim().length})`);
       setNameError('Project name must be less than 50 characters');
       return false;
     }
     
-    console.log(`🏗️ [CreateProject] Validation passed`);
     setNameError('');
     return true;
   }, []);
@@ -68,10 +57,7 @@ export default function CreateProject() {
   };
 
   const handleCreateProject = useCallback(async () => {
-    console.log(`🏗️ [CreateProject] Create project button pressed`);
-    
     if (!validateProjectName(projectName)) {
-      console.log(`🏗️ [CreateProject] Validation failed, not creating project`);
       return;
     }
 
@@ -79,17 +65,13 @@ export default function CreateProject() {
       setLoading(true);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      console.log(`🏗️ [CreateProject] Creating project: "${projectName}" of type: ${selectedType}`);
-      
       const project = await projectService.createProject(selectedType, projectName.trim());
-
-      console.log(`🏗️ [CreateProject] Project created successfully:`, project.id);
       
       // Navigate to the new project
       router.replace(`/project/${project.id}`);
       
     } catch (error) {
-      console.error(`🏗️ [CreateProject] Failed to create project:`, error);
+      console.error('Failed to create project:', error);
       Alert.alert('Error', 'Failed to create project. Please try again.');
     } finally {
       setLoading(false);
@@ -145,117 +127,102 @@ export default function CreateProject() {
         <View style={styles.placeholder} />
       </View>
 
-      <KeyboardAvoidingView 
-        style={styles.content}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      <KeyboardAvoidingContainer
+        containerStyle={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        hasToolbar={false}
+        verticalOffset={0}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Project Name Input */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Project Name</Text>
-            <MineInput
-              ref={projectNameInputRef}
-              value={projectName}
-              onChangeText={(text) => {
-                console.log(`🏗️ [CreateProject] Project name changed: "${text}"`);
-                setProjectName(text);
-                if (nameError) validateProjectName(text);
-              }}
-              placeholder="Enter project name..."
-              error={nameError}
-              maxLength={50}
-              style={styles.nameInput}
-              inputId="projectName"
-              autoFocus={true}
-              returnKeyType="done"
-              autoCapitalize="words"
-              autoCorrect={false}
-              blurOnSubmit={false}
-              onSubmitEditing={() => {
-                console.log(`🏗️ [CreateProject] Project name input submit editing`);
-                dismissKeyboard();
-                handleCreateProject();
-              }}
-              onFocusChange={(focused, id) => {
-                console.log(`🏗️ [CreateProject] Project name input focus changed: ${focused} for ${id}`);
-              }}
-            />
-          </View>
-
-          {/* Project Type Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Project Type</Text>
-            <Text style={styles.sectionDescription}>
-              Choose how you want to organize your video clips
-            </Text>
-            
-            <View style={styles.typeCards}>
-              {renderProjectTypeCard(
-                'timeline',
-                'Timeline Project',
-                'Organize videos by calendar date. Perfect for daily journaling and tracking progress over time.',
-                'calendar',
-                Colors.sage
-              )}
-              
-              {renderProjectTypeCard(
-                'freestyle',
-                'Freestyle Project',
-                'Organize videos manually in any order. Great for themed collections and creative projects.',
-                'albums',
-                Colors.lavender
-              )}
-            </View>
-          </View>
-
-          {/* Features Preview */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>What you can do</Text>
-            
-            <View style={styles.featuresList}>
-              <View style={styles.featureItem}>
-                <Ionicons name="videocam" size={20} color={Colors.sage} />
-                <Text style={styles.featureText}>Capture 1-3 second video moments</Text>
-              </View>
-              
-              <View style={styles.featureItem}>
-                <Ionicons name="film" size={20} color={Colors.sage} />
-                <Text style={styles.featureText}>Compile videos into cinematic timelines</Text>
-              </View>
-              
-              <View style={styles.featureItem}>
-                <Ionicons name="document-text" size={20} color={Colors.sage} />
-                <Text style={styles.featureText}>Add notes and memories to each clip</Text>
-              </View>
-              
-              <View style={styles.featureItem}>
-                <Ionicons name="share" size={20} color={Colors.sage} />
-                <Text style={styles.featureText}>Export and share your completed projects</Text>
-              </View>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-
-        {/* Create Button */}
-        <View style={styles.footer}>
-          <MineButton
-            onPress={handleCreateProject}
-            loading={loading}
-            disabled={!projectName.trim() || !!nameError}
-            style={styles.createButton}
-          >
-            Create Project
-          </MineButton>
+        {/* Project Name Input */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Project Name</Text>
+          <TextInput
+            value={projectName}
+            onChangeText={(text) => {
+              setProjectName(text);
+              if (nameError) validateProjectName(text);
+            }}
+            placeholder="Enter project name..."
+            maxLength={50}
+            style={styles.testInput}
+            autoFocus={true}
+            returnKeyType="done"
+            autoCapitalize="words"
+            autoCorrect={false}
+            onSubmitEditing={() => {
+              dismissKeyboard();
+              handleCreateProject();
+            }}
+          />
+          {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
         </View>
+
+        {/* Project Type Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Project Type</Text>
+          <Text style={styles.sectionDescription}>
+            Choose how you want to organize your video clips
+          </Text>
+          
+          <View style={styles.typeCards}>
+            {renderProjectTypeCard(
+              'timeline',
+              'Timeline Project',
+              'Organize videos by calendar date. Perfect for daily journaling and tracking progress over time.',
+              'calendar',
+              Colors.sage
+            )}
+            
+            {renderProjectTypeCard(
+              'freestyle',
+              'Freestyle Project',
+              'Organize videos manually in any order. Great for themed collections and creative projects.',
+              'albums',
+              Colors.lavender
+            )}
+          </View>
+        </View>
+
+        {/* Features Preview */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>What you can do</Text>
+          
+          <View style={styles.featuresList}>
+            <View style={styles.featureItem}>
+              <Ionicons name="videocam" size={20} color={Colors.sage} />
+              <Text style={styles.featureText}>Capture 1-3 second video moments</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <Ionicons name="film" size={20} color={Colors.sage} />
+              <Text style={styles.featureText}>Compile videos into cinematic timelines</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <Ionicons name="document-text" size={20} color={Colors.sage} />
+              <Text style={styles.featureText}>Add notes and memories to each clip</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <Ionicons name="share" size={20} color={Colors.sage} />
+              <Text style={styles.featureText}>Export and share your completed projects</Text>
+            </View>
+          </View>
+        </View>
+      </KeyboardAvoidingContainer>
+
+      {/* Create Button */}
+      <View style={styles.footer}>
+        <MineButton
+          onPress={handleCreateProject}
+          loading={loading}
+          disabled={!projectName.trim() || !!nameError}
+          style={styles.createButton}
+        >
+          Create Project
+        </MineButton>
+      </View>
         
-        {/* Debug Panel - Development Only - Temporarily disabled */}
-        {/* <KeyboardDebugPanel /> */}
     </SafeAreaView>
   );
 }
@@ -320,6 +287,20 @@ const styles = StyleSheet.create({
   // Name Input
   nameInput: {
     marginBottom: 0,
+  },
+  testInput: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    backgroundColor: Colors.white,
+    fontSize: 16,
+    minHeight: TouchTargets.button,
+  },
+  errorText: {
+    ...Typography.caption,
+    color: Colors.error,
+    marginTop: Spacing.xs,
   },
   
   // Type Cards

@@ -11,7 +11,10 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 import expo.modules.ReactActivityDelegateWrapper
 
-class MainActivity : ReactActivity() {
+// Keyboard Controller imports
+import com.reactnativekeyboardcontroller.KeyboardControllerActivity
+
+class MainActivity : ReactActivity(), KeyboardControllerActivity {
   override fun onCreate(savedInstanceState: Bundle?) {
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.

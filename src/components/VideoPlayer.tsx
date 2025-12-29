@@ -14,7 +14,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 
@@ -54,17 +54,10 @@ export function VideoPlayer({
   hasPreviousVideo = false,
   style,
 }: VideoPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1.0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [showControlsOverlay, setShowControlsOverlay] = useState(true);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
   
-  const videoRef = useRef<Video>(null);
   const fadeAnimation = useRef(new Animated.Value(1)).current;
   const volumeAnimation = useRef(new Animated.Value(0)).current;
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -74,19 +67,26 @@ export function VideoPlayer({
   // Get video source from either snippet or direct path
   const videoSource = snippet?.filePath || videoPath;
 
+  // Create video player instance
+  const player = useVideoPlayer(videoSource || '', (player) => {
+    if (autoPlay) {
+      player.play();
+    }
+  });
+
   if (!videoSource) {
     return null; // Don't render if no video source
   }
 
   useEffect(() => {
     if (visible && autoPlay) {
-      setIsPlaying(true);
+      player.play();
     }
-  }, [visible, autoPlay]);
+  }, [visible, autoPlay, player]);
 
   useEffect(() => {
     // Auto-hide controls after 3 seconds
-    if (showControlsOverlay && isPlaying) {
+    if (showControlsOverlay && player.playing) {
       controlsTimeout.current = setTimeout(() => {
         hideControls();
       }, 3000) as unknown as NodeJS.Timeout;
@@ -97,7 +97,7 @@ export function VideoPlayer({
         clearTimeout(controlsTimeout.current);
       }
     };
-  }, [showControlsOverlay, isPlaying]);
+  }, [showControlsOverlay, player.playing]);
 
   const hideControls = () => {
     Animated.timing(fadeAnimation, {
@@ -121,23 +121,18 @@ export function VideoPlayer({
   const handlePlayPause = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
-    if (videoRef.current) {
-      if (isPlaying) {
-        await videoRef.current.pauseAsync();
-        setIsPlaying(false);
-        showControlsOverlayFunc();
-      } else {
-        await videoRef.current.playAsync();
-        setIsPlaying(true);
-      }
+    if (player.playing) {
+      player.pause();
+      showControlsOverlayFunc();
+    } else {
+      player.play();
     }
   };
 
   const handleSeek = async (seekPosition: number) => {
-    if (videoRef.current && duration > 0) {
-      const seekTime = (seekPosition / 100) * duration;
-      await videoRef.current.setPositionAsync(seekTime * 1000);
-      setPosition(seekTime);
+    if (player.duration > 0) {
+      const seekTime = (seekPosition / 100) * player.duration;
+      player.seekTo(seekTime);
     }
   };
 
@@ -153,25 +148,16 @@ export function VideoPlayer({
   const handleVolumeToggle = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
-    if (isMuted) {
-      setIsMuted(false);
-      if (videoRef.current) {
-        await videoRef.current.setVolumeAsync(volume);
-      }
+    if (player.muted) {
+      player.muted = false;
     } else {
-      setIsMuted(true);
-      if (videoRef.current) {
-        await videoRef.current.setVolumeAsync(0);
-      }
+      player.muted = true;
     }
   };
 
   const handleVolumeChange = async (newVolume: number) => {
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-    if (videoRef.current) {
-      await videoRef.current.setVolumeAsync(newVolume);
-    }
+    player.volume = newVolume;
+    player.muted = newVolume === 0;
   };
 
   const toggleVolumeSlider = () => {
@@ -299,8 +285,13 @@ export function VideoPlayer({
         {/* Controls Overlay */}
         {showControls && (
           <Animated.View 
-            style={[styles.controlsOverlay, { opacity: fadeAnimation }]}
-            pointerEvents={showControlsOverlay ? 'auto' : 'none'}
+            style={[
+              styles.controlsOverlay, 
+              { 
+                opacity: fadeAnimation,
+                pointerEvents: showControlsOverlay ? 'auto' : 'none'
+              }
+            ]}
           >
             {/* Top Controls */}
             <View style={styles.topControls}>
@@ -565,13 +556,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.sage, // Sage play controls
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
     elevation: 8,
   },
   navigationButton: {
