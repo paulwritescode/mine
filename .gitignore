@@ -10,6 +10,9 @@ yarn-error.log*
 dist/
 web-build/
 
+# kiro
+.kiro/
+
 # Native
 *.orig.*
 *.jks
