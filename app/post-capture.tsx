@@ -3,25 +3,28 @@
  * Implements Requirements 2.4, 2.5, 10.1, 10.2
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
   Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { Colors, Spacing, Typography, TouchTargets } from '@/src/design-system';
-import { MineButton, MineInput, VideoPlayer } from '@/src/components';
+import { MineButton, MineInput, VideoPlayer, MineInputRef } from '@/src/components';
 import { SnippetService } from '@/src/services/SnippetService';
 import { VideoService } from '@/src/services/VideoService';
+import { useSimpleKeyboard } from '@/src/hooks/useSimpleKeyboard';
 
 export default function PostCapture() {
   const { videoPath, projectId, date } = useLocalSearchParams<{ 
@@ -34,8 +37,14 @@ export default function PostCapture() {
   const [processing, setProcessing] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  const noteInputRef = useRef<MineInputRef>(null);
+  const { isVisible: keyboardVisible, dismiss: dismissKeyboard } = useSimpleKeyboard();
+
   const snippetService = SnippetService.getInstance();
   const videoService = VideoService.getInstance();
+
+  console.log(`📹 [PostCapture] Component mounted with params:`, { videoPath, projectId, date });
+  console.log(`📹 [PostCapture] Keyboard visible: ${keyboardVisible}`);
 
   useEffect(() => {
     // Video processing will happen when user saves
@@ -62,10 +71,17 @@ export default function PostCapture() {
   };
 
   const handleSave = async () => {
+    console.log(`📹 [PostCapture] Save button pressed`);
+    
     if (!videoPath || !projectId) {
+      console.error(`📹 [PostCapture] Missing required information:`, { videoPath, projectId });
       Alert.alert('Error', 'Missing required information');
       return;
     }
+
+    // Dismiss keyboard before saving
+    console.log(`📹 [PostCapture] Dismissing keyboard before save`);
+    dismissKeyboard();
 
     try {
       setProcessing(true);
@@ -120,13 +136,16 @@ export default function PostCapture() {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAwareScrollView 
+      <KeyboardAvoidingView 
         style={styles.content}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        bottomOffset={20}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Video Preview Thumbnail */}
         <View style={styles.videoPreview}>
           <TouchableOpacity
@@ -146,16 +165,28 @@ export default function PostCapture() {
           </Text>
           
           <MineInput
+            ref={noteInputRef}
             value={note}
-            onChangeText={setNote}
+            onChangeText={(text) => {
+              console.log(`📹 [PostCapture] Note text changed, length: ${text.length}`);
+              setNote(text);
+            }}
             placeholder="What happened in this moment?"
             multiline
             numberOfLines={4}
             maxLength={500}
             style={styles.noteInput}
+            inputId="note"
             returnKeyType="done"
             autoCapitalize="sentences"
             autoCorrect={true}
+            onSubmitEditing={() => {
+              console.log(`📹 [PostCapture] Note input submit editing`);
+              dismissKeyboard();
+            }}
+            onFocusChange={(focused, id) => {
+              console.log(`📹 [PostCapture] Note input focus changed: ${focused} for ${id}`);
+            }}
           />
           
           <Text style={styles.characterCount}>
@@ -205,7 +236,8 @@ export default function PostCapture() {
             </View>
           </View>
         </View>
-      </KeyboardAwareScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Save Button */}
       <View style={styles.footer}>
@@ -227,6 +259,9 @@ export default function PostCapture() {
           autoPlay={true}
         />
       )}
+      
+      {/* Debug Panel - Development Only - Temporarily disabled */}
+      {/* <KeyboardDebugPanel /> */}
     </SafeAreaView>
   );
 }

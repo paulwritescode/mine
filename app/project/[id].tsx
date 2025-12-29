@@ -20,6 +20,7 @@ import { Colors, Spacing, Typography, TouchTargets, ZIndex } from '@/src/design-
 import { CalendarGrid, VideoPlayer } from '@/src/components';
 import { ProjectService } from '@/src/services/ProjectService';
 import { SnippetService } from '@/src/services/SnippetService';
+import { TimelineService } from '@/src/services/TimelineService';
 import { Project, VideoSnippet } from '@/src/types';
 
 export default function ProjectDetail() {
@@ -29,9 +30,12 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<VideoSnippet | null>(null);
+  const [hasNextVideo, setHasNextVideo] = useState(false);
+  const [hasPreviousVideo, setHasPreviousVideo] = useState(false);
 
   const projectService = ProjectService.getInstance();
   const snippetService = SnippetService.getInstance();
+  const timelineService = TimelineService.getInstance();
 
   useEffect(() => {
     if (id) {
@@ -64,27 +68,69 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleDatePress = async (date: Date, hasVideo: boolean) => {
+  const handleDatePress = async (date: Date) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
     const dateString = date.toISOString().split('T')[0];
+    const existingSnippet = snippets.find(s => s.calendarDate === dateString);
     
-    if (hasVideo) {
+    if (existingSnippet) {
       // Find and play the video for this date
-      const snippet = snippets.find(s => s.calendarDate === dateString);
-      if (snippet) {
-        setSelectedVideo(snippet);
-        setShowVideoPlayer(true);
-      }
+      await setSelectedVideoWithSequence(existingSnippet);
     } else {
       // Navigate to camera for this date
       router.push(`/camera?projectId=${id}&date=${dateString}`);
     }
   };
 
+  const setSelectedVideoWithSequence = async (snippet: VideoSnippet) => {
+    try {
+      const sequence = await timelineService.getVideoSequence(id!, snippet.id);
+      setSelectedVideo(snippet);
+      setHasNextVideo(sequence.hasNext);
+      setHasPreviousVideo(sequence.hasPrevious);
+      setShowVideoPlayer(true);
+    } catch (error) {
+      console.error('Failed to load video sequence:', error);
+      // Fallback to single video playback
+      setSelectedVideo(snippet);
+      setHasNextVideo(false);
+      setHasPreviousVideo(false);
+      setShowVideoPlayer(true);
+    }
+  };
+
+  const handleNextVideo = async () => {
+    if (!selectedVideo) return;
+    
+    try {
+      const nextSnippet = await timelineService.getNextVideo(id!, selectedVideo.id);
+      if (nextSnippet) {
+        await setSelectedVideoWithSequence(nextSnippet);
+      }
+    } catch (error) {
+      console.error('Failed to load next video:', error);
+    }
+  };
+
+  const handlePreviousVideo = async () => {
+    if (!selectedVideo) return;
+    
+    try {
+      const previousSnippet = await timelineService.getPreviousVideo(id!, selectedVideo.id);
+      if (previousSnippet) {
+        await setSelectedVideoWithSequence(previousSnippet);
+      }
+    } catch (error) {
+      console.error('Failed to load previous video:', error);
+    }
+  };
+
   const handleVideoPlayerClose = () => {
     setShowVideoPlayer(false);
     setSelectedVideo(null);
+    setHasNextVideo(false);
+    setHasPreviousVideo(false);
   };
 
   const getProjectTypeIcon = (type: string): keyof typeof Ionicons.glyphMap => {
@@ -152,18 +198,26 @@ export default function ProjectDetail() {
       <View style={styles.calendarContainer}>
         <CalendarGrid
           snippets={snippets}
-          onDatePress={handleDatePress}
           currentDate={new Date()}
+          onDateChange={() => {}} // Add empty handler for now
+          onCellPress={handleDatePress}
         />
       </View>
 
       {/* Video Player Modal */}
       {showVideoPlayer && selectedVideo && (
         <VideoPlayer
-          videoPath={selectedVideo.filePath}
+          snippet={selectedVideo}
           visible={showVideoPlayer}
           onClose={handleVideoPlayerClose}
           autoPlay={true}
+          showControls={true}
+          showNoteOverlay={!!selectedVideo.note}
+          autoPlayNext={project?.type === 'timeline'}
+          hasNextVideo={hasNextVideo}
+          hasPreviousVideo={hasPreviousVideo}
+          onNextVideo={handleNextVideo}
+          onPreviousVideo={handlePreviousVideo}
         />
       )}
     </SafeAreaView>

@@ -129,12 +129,19 @@ export class VideoService {
       await FileSystemService.ensureDirectoryExists(thumbnailDir);
       
       // Generate unique thumbnail filename
-      const thumbnailName = `thumbnail_${Date.now()}.jpg`;
+      const thumbnailName = `thumbnail_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
       const thumbnailPath = `${thumbnailDir}${thumbnailName}`;
 
       // For now, we'll create a placeholder thumbnail
       // In a production app, you'd extract a frame from the video
       const placeholderThumbnail = await this.createPlaceholderThumbnail();
+      
+      // Ensure destination doesn't exist before copying
+      try {
+        await FileSystem.deleteAsync(thumbnailPath, { idempotent: true });
+      } catch (deleteError) {
+        // Ignore delete errors
+      }
       
       await FileSystemService.copyFile(placeholderThumbnail, thumbnailPath);
 
@@ -150,14 +157,21 @@ export class VideoService {
   private async createPlaceholderThumbnail(): Promise<string> {
     // This is a temporary implementation
     // In a real app, you'd extract a frame from the video
-    const placeholderPath = FileSystemService.getTempPath('placeholder_thumbnail.jpg');
+    const timestamp = Date.now();
+    const placeholderPath = FileSystemService.getTempPath(`placeholder_thumbnail_${timestamp}.jpg`);
     
-    // Create a simple placeholder file
-    await FileSystem.writeAsStringAsync(placeholderPath, '', {
-      encoding: 'base64' as any,
-    });
-    
-    return placeholderPath;
+    try {
+      // Use legacy API for now since new API has issues
+      await FileSystem.writeAsStringAsync(placeholderPath, '', {
+        encoding: 'utf8',
+      });
+      
+      return placeholderPath;
+    } catch (error) {
+      console.error('Failed to create placeholder thumbnail:', error);
+      // Return the path anyway for now
+      return placeholderPath;
+    }
   }
 
   /**

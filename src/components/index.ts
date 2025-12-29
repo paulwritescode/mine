@@ -11,6 +11,8 @@ export * from './CalendarCell';
 export * from './CalendarGrid';
 export * from './VideoPlayer';
 export * from './MineInput';
+export * from './KeyboardManager';
+export * from './KeyboardDebugPanel';
 
 // Feature Components (to be implemented in later tasks)
 // export * from './ProjectCard';

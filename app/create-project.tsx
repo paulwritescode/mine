@@ -2,24 +2,26 @@
  * CreateProject - Project creation screen with design system
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
   Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { Colors, Spacing, Typography, TouchTargets, BorderRadius } from '@/src/design-system';
-import { MineButton, MineInput, MineCard } from '@/src/components';
+import { MineButton, MineInput, MineCard, MineInputRef } from '@/src/components';
 import { ProjectService } from '@/src/services/ProjectService';
+import { useSimpleKeyboard } from '@/src/hooks/useSimpleKeyboard';
 
 type ProjectType = 'timeline' | 'freestyle';
 
@@ -29,32 +31,47 @@ export default function CreateProject() {
   const [loading, setLoading] = useState(false);
   const [nameError, setNameError] = useState('');
 
+  const projectNameInputRef = useRef<MineInputRef>(null);
+  const { dismiss: dismissKeyboard } = useSimpleKeyboard();
+
   const projectService = ProjectService.getInstance();
 
-  const validateProjectName = (name: string): boolean => {
+  console.log(`🏗️ [CreateProject] Component mounted`);
+
+  const validateProjectName = useCallback((name: string): boolean => {
+    console.log(`🏗️ [CreateProject] Validating project name: "${name}"`);
+    
     if (!name.trim()) {
+      console.log(`🏗️ [CreateProject] Validation failed: empty name`);
       setNameError('Project name is required');
       return false;
     }
     if (name.trim().length < 2) {
+      console.log(`🏗️ [CreateProject] Validation failed: too short (${name.trim().length})`);
       setNameError('Project name must be at least 2 characters');
       return false;
     }
     if (name.trim().length > 50) {
+      console.log(`🏗️ [CreateProject] Validation failed: too long (${name.trim().length})`);
       setNameError('Project name must be less than 50 characters');
       return false;
     }
+    
+    console.log(`🏗️ [CreateProject] Validation passed`);
     setNameError('');
     return true;
-  };
+  }, []);
 
   const handleProjectTypeSelect = async (type: ProjectType) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedType(type);
   };
 
-  const handleCreateProject = async () => {
+  const handleCreateProject = useCallback(async () => {
+    console.log(`🏗️ [CreateProject] Create project button pressed`);
+    
     if (!validateProjectName(projectName)) {
+      console.log(`🏗️ [CreateProject] Validation failed, not creating project`);
       return;
     }
 
@@ -62,18 +79,22 @@ export default function CreateProject() {
       setLoading(true);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+      console.log(`🏗️ [CreateProject] Creating project: "${projectName}" of type: ${selectedType}`);
+      
       const project = await projectService.createProject(selectedType, projectName.trim());
+
+      console.log(`🏗️ [CreateProject] Project created successfully:`, project.id);
       
       // Navigate to the new project
       router.replace(`/project/${project.id}`);
       
     } catch (error) {
-      console.error('Failed to create project:', error);
+      console.error(`🏗️ [CreateProject] Failed to create project:`, error);
       Alert.alert('Error', 'Failed to create project. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectName, selectedType, validateProjectName]);
 
   const renderProjectTypeCard = (
     type: ProjectType,
@@ -124,19 +145,24 @@ export default function CreateProject() {
         <View style={styles.placeholder} />
       </View>
 
-      <KeyboardAwareScrollView 
+      <KeyboardAvoidingView 
         style={styles.content}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        bottomOffset={20}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Project Name Input */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Project Name</Text>
             <MineInput
+              ref={projectNameInputRef}
               value={projectName}
               onChangeText={(text) => {
+                console.log(`🏗️ [CreateProject] Project name changed: "${text}"`);
                 setProjectName(text);
                 if (nameError) validateProjectName(text);
               }}
@@ -144,10 +170,20 @@ export default function CreateProject() {
               error={nameError}
               maxLength={50}
               style={styles.nameInput}
+              inputId="projectName"
               autoFocus={true}
-              returnKeyType="next"
+              returnKeyType="done"
               autoCapitalize="words"
               autoCorrect={false}
+              blurOnSubmit={false}
+              onSubmitEditing={() => {
+                console.log(`🏗️ [CreateProject] Project name input submit editing`);
+                dismissKeyboard();
+                handleCreateProject();
+              }}
+              onFocusChange={(focused, id) => {
+                console.log(`🏗️ [CreateProject] Project name input focus changed: ${focused} for ${id}`);
+              }}
             />
           </View>
 
@@ -203,7 +239,8 @@ export default function CreateProject() {
               </View>
             </View>
           </View>
-        </KeyboardAwareScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
         {/* Create Button */}
         <View style={styles.footer}>
@@ -216,6 +253,9 @@ export default function CreateProject() {
             Create Project
           </MineButton>
         </View>
+        
+        {/* Debug Panel - Development Only - Temporarily disabled */}
+        {/* <KeyboardDebugPanel /> */}
     </SafeAreaView>
   );
 }

@@ -120,21 +120,58 @@ export const MinimalControls: Story = {
   },
 };
 
-// Interactive story for testing playback
-export const Interactive: Story = {
+export const WithVolumeControl: Story = {
   args: {
     snippet: mockSnippet,
     visible: true,
-    onClose: () => {
-      console.log('Video player closed - would navigate back to calendar');
-    },
+    onClose: () => console.log('Video player closed'),
     autoPlay: true,
     showControls: true,
   },
   parameters: {
     docs: {
       description: {
-        story: 'Interactive video player for testing playback controls and interactions. Tap the video to show/hide controls.',
+        story: 'Video player with volume control slider and mute functionality.',
+      },
+    },
+  },
+};
+
+export const WithNoteOverlay: Story = {
+  args: {
+    snippet: mockSnippet,
+    visible: true,
+    onClose: () => console.log('Video player closed'),
+    autoPlay: true,
+    showControls: true,
+    showNoteOverlay: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Video player with note overlay displayed during playback.',
+      },
+    },
+  },
+};
+
+export const TimelineSequence: Story = {
+  args: {
+    snippet: mockSnippet,
+    visible: true,
+    onClose: () => console.log('Video player closed'),
+    autoPlay: true,
+    showControls: true,
+    autoPlayNext: true,
+    hasNextVideo: true,
+    hasPreviousVideo: true,
+    onNextVideo: () => console.log('Next video requested'),
+    onPreviousVideo: () => console.log('Previous video requested'),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Video player with timeline sequence navigation and auto-play next functionality.',
       },
     },
   },

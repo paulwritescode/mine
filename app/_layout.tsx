@@ -1,4 +1,3 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -22,6 +21,7 @@ export default function RootLayout() {
   const { setInitialized, setError } = useAppStore();
 
   useEffect(() => {
+    console.log(`🚀 [RootLayout] App initialization starting...`);
     initializeApp();
   }, []);
 
@@ -30,16 +30,17 @@ export default function RootLayout() {
       setIsInitializing(true);
       setInitError(null);
 
+      console.log(`🚀 [RootLayout] Initializing database...`);
       // Initialize database
       await databaseService.initialize();
       
       // Mark app as initialized
       setInitialized(true);
       
-      console.log('Mine app initialized successfully');
+      console.log('🚀 [RootLayout] Mine app initialized successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
-      console.error('Failed to initialize app:', errorMessage);
+      console.error('🚀 [RootLayout] Failed to initialize app:', errorMessage);
       setInitError(errorMessage);
       setError(errorMessage);
     } finally {
@@ -72,17 +73,16 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <DesignThemeProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            <Stack.Screen name="camera" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
-            <Stack.Screen name="post-capture" options={{ headerShown: false }} />
-            <Stack.Screen name="create-project" options={{ headerShown: false }} />
-            <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        {console.log(`🚀 [RootLayout] Rendering app with KeyboardProvider and theme: ${colorScheme}`)}
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          <Stack.Screen name="camera" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="post-capture" options={{ headerShown: false }} />
+          <Stack.Screen name="create-project" options={{ headerShown: false }} />
+          <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="auto" />
       </DesignThemeProvider>
     </KeyboardProvider>
   );

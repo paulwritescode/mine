@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
+import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 
 import { Colors, Spacing, Typography, BorderRadius, TouchTargets } from '../design-system';
@@ -27,6 +28,13 @@ export interface VideoPlayerProps {
   onClose: () => void;
   autoPlay?: boolean;
   showControls?: boolean;
+  showNoteOverlay?: boolean;
+  autoPlayNext?: boolean;
+  onVideoEnd?: () => void;
+  onNextVideo?: () => void;
+  onPreviousVideo?: () => void;
+  hasNextVideo?: boolean;
+  hasPreviousVideo?: boolean;
   style?: any;
 }
 
@@ -37,22 +45,38 @@ export function VideoPlayer({
   onClose,
   autoPlay = true,
   showControls = true,
+  showNoteOverlay = false,
+  autoPlayNext = false,
+  onVideoEnd,
+  onNextVideo,
+  onPreviousVideo,
+  hasNextVideo = false,
+  hasPreviousVideo = false,
   style,
 }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1.0);
+  const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showControlsOverlay, setShowControlsOverlay] = useState(true);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
   
   const videoRef = useRef<Video>(null);
   const fadeAnimation = useRef(new Animated.Value(1)).current;
+  const volumeAnimation = useRef(new Animated.Value(0)).current;
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
   
   const screenDimensions = Dimensions.get('window');
 
   // Get video source from either snippet or direct path
   const videoSource = snippet?.filePath || videoPath;
+
+  if (!videoSource) {
+    return null; // Don't render if no video source
+  }
 
   useEffect(() => {
     if (visible && autoPlay) {
@@ -111,9 +135,66 @@ export function VideoPlayer({
 
   const handleSeek = async (seekPosition: number) => {
     if (videoRef.current && duration > 0) {
-      const seekTime = (seekPosition * duration) / 100;
+      const seekTime = (seekPosition / 100) * duration;
       await videoRef.current.setPositionAsync(seekTime * 1000);
       setPosition(seekTime);
+    }
+  };
+
+  const handleSeekStart = () => {
+    setIsSeeking(true);
+    showControlsOverlayFunc();
+  };
+
+  const handleSeekEnd = () => {
+    setIsSeeking(false);
+  };
+
+  const handleVolumeToggle = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    if (isMuted) {
+      setIsMuted(false);
+      if (videoRef.current) {
+        await videoRef.current.setVolumeAsync(volume);
+      }
+    } else {
+      setIsMuted(true);
+      if (videoRef.current) {
+        await videoRef.current.setVolumeAsync(0);
+      }
+    }
+  };
+
+  const handleVolumeChange = async (newVolume: number) => {
+    setVolume(newVolume);
+    setIsMuted(newVolume === 0);
+    if (videoRef.current) {
+      await videoRef.current.setVolumeAsync(newVolume);
+    }
+  };
+
+  const toggleVolumeSlider = () => {
+    setShowVolumeSlider(!showVolumeSlider);
+    
+    Animated.timing(volumeAnimation, {
+      toValue: showVolumeSlider ? 0 : 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleNextVideo = async () => {
+    if (hasNextVideo && onNextVideo) {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      onNextVideo();
+    }
+  };
+
+  const handlePreviousVideo = async () => {
+    if (hasPreviousVideo && onPreviousVideo) {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      onPreviousVideo();
     }
   };
 
@@ -137,12 +218,28 @@ export function VideoPlayer({
   const onPlaybackStatusUpdate = (status: any) => {
     if (status.isLoaded) {
       setIsLoading(false);
-      setPosition(status.positionMillis / 1000);
+      
+      if (!isSeeking) {
+        setPosition(status.positionMillis / 1000);
+      }
+      
       setDuration(status.durationMillis / 1000);
       
       if (status.didJustFinish) {
         setIsPlaying(false);
         showControlsOverlayFunc();
+        
+        // Handle auto-play next video for timeline sequences
+        if (autoPlayNext && hasNextVideo && onNextVideo) {
+          setTimeout(() => {
+            onNextVideo();
+          }, 1000); // 1 second delay before auto-playing next
+        }
+        
+        // Call onVideoEnd callback if provided
+        if (onVideoEnd) {
+          onVideoEnd();
+        }
       }
     }
   };
@@ -176,6 +273,7 @@ export function VideoPlayer({
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay={isPlaying}
             isLooping={false}
+            volume={isMuted ? 0 : volume}
             onPlaybackStatusUpdate={onPlaybackStatusUpdate}
           />
           
@@ -184,6 +282,15 @@ export function VideoPlayer({
             <View style={styles.loadingContainer}>
               <View style={styles.loadingSpinner}>
                 <Ionicons name="play-circle" size={64} color={Colors.sage} />
+              </View>
+            </View>
+          )}
+
+          {/* Note Overlay */}
+          {showNoteOverlay && snippet?.note && (
+            <View style={styles.noteOverlay}>
+              <View style={styles.noteContainer}>
+                <Text style={styles.noteText}>{snippet.note}</Text>
               </View>
             </View>
           )}
@@ -211,16 +318,67 @@ export function VideoPlayer({
                     'Video Snippet'
                   }
                 </Text>
-                {snippet?.note && (
+                {snippet?.note && !showNoteOverlay && (
                   <Text style={styles.videoNote} numberOfLines={2}>
                     {snippet.note}
                   </Text>
                 )}
               </View>
+
+              {/* Volume Control */}
+              <View style={styles.volumeControls}>
+                <TouchableOpacity 
+                  onPress={toggleVolumeSlider}
+                  style={styles.volumeButton}
+                >
+                  <Ionicons 
+                    name={isMuted ? "volume-mute" : volume > 0.5 ? "volume-high" : "volume-low"} 
+                    size={24} 
+                    color={Colors.white} 
+                  />
+                </TouchableOpacity>
+                
+                {/* Volume Slider */}
+                <Animated.View 
+                  style={[
+                    styles.volumeSliderContainer,
+                    { 
+                      opacity: volumeAnimation,
+                      transform: [{ 
+                        translateX: volumeAnimation.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [100, 0]
+                        })
+                      }]
+                    }
+                  ]}
+                >
+                  <Slider
+                    style={styles.volumeSlider}
+                    minimumValue={0}
+                    maximumValue={1}
+                    value={volume}
+                    onValueChange={handleVolumeChange}
+                    minimumTrackTintColor={Colors.sage}
+                    maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
+                  />
+                </Animated.View>
+              </View>
             </View>
 
-            {/* Center Play/Pause Button */}
+            {/* Center Controls */}
             <View style={styles.centerControls}>
+              {/* Previous Video Button */}
+              {hasPreviousVideo && (
+                <TouchableOpacity 
+                  onPress={handlePreviousVideo}
+                  style={styles.navigationButton}
+                >
+                  <Ionicons name="play-skip-back" size={32} color={Colors.white} />
+                </TouchableOpacity>
+              )}
+
+              {/* Play/Pause Button */}
               <TouchableOpacity 
                 onPress={handlePlayPause}
                 style={styles.playPauseButton}
@@ -231,6 +389,16 @@ export function VideoPlayer({
                   color={Colors.white} 
                 />
               </TouchableOpacity>
+
+              {/* Next Video Button */}
+              {hasNextVideo && (
+                <TouchableOpacity 
+                  onPress={handleNextVideo}
+                  style={styles.navigationButton}
+                >
+                  <Ionicons name="play-skip-forward" size={32} color={Colors.white} />
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Bottom Controls */}
@@ -240,14 +408,24 @@ export function VideoPlayer({
               </Text>
               
               <View style={styles.progressContainer}>
-                <View style={styles.progressBackground}>
-                  <View 
-                    style={[
-                      styles.progressFill, 
-                      { width: `${progressPercentage}%` }
-                    ]} 
-                  />
-                </View>
+                <Slider
+                  style={styles.progressSlider}
+                  minimumValue={0}
+                  maximumValue={100}
+                  value={duration > 0 ? (position / duration) * 100 : 0}
+                  onValueChange={(value) => {
+                    if (!isSeeking) return;
+                    const newPosition = (value / 100) * duration;
+                    setPosition(newPosition);
+                  }}
+                  onSlidingStart={handleSeekStart}
+                  onSlidingComplete={(value) => {
+                    handleSeekEnd();
+                    handleSeek(value);
+                  }}
+                  minimumTrackTintColor={Colors.sage}
+                  maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
+                />
               </View>
               
               <Text style={styles.timeText}>
@@ -289,6 +467,26 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   
+  // Note Overlay
+  noteOverlay: {
+    position: 'absolute',
+    bottom: 120,
+    left: Spacing.lg,
+    right: Spacing.lg,
+  },
+  noteContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+  },
+  noteText: {
+    ...Typography.body,
+    color: Colors.white,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  
   // Controls Overlay
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -315,6 +513,7 @@ const styles = StyleSheet.create({
   videoInfo: {
     flex: 1,
     marginLeft: Spacing.md,
+    marginRight: Spacing.md,
     justifyContent: 'center',
   },
   videoTitle: {
@@ -329,11 +528,35 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   
+  // Volume Controls
+  volumeControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  volumeButton: {
+    width: TouchTargets.minimum,
+    height: TouchTargets.minimum,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: BorderRadius.circle,
+  },
+  volumeSliderContainer: {
+    marginLeft: Spacing.md,
+    width: 100,
+  },
+  volumeSlider: {
+    width: 100,
+    height: 40,
+  },
+  
   // Center Controls
   centerControls: {
     flex: 1,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: Spacing.xl,
   },
   playPauseButton: {
     width: 80,
@@ -350,6 +573,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  navigationButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   // Bottom Controls
@@ -369,7 +600,12 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     flex: 1,
-    height: 4,
+    height: 40,
+    justifyContent: 'center',
+  },
+  progressSlider: {
+    width: '100%',
+    height: 40,
   },
   progressBackground: {
     flex: 1,
