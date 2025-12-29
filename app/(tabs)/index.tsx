@@ -1,30 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import { useFonts } from 'expo-font';
+import { NanumPenScript_400Regular } from '@expo-google-fonts/nanum-pen-script';
 
-import { Colors, Spacing, Typography, TouchTargets, ZIndex } from '@/src/design-system';
-import { MineButton, MineCard } from '@/src/components';
+import { useTheme } from '@/src/design-system';
+import { DualToneProjectCard, ThemedText, BentoStatsGrid } from '@/src/components';
 import { ProjectService } from '@/src/services/ProjectService';
 import { Project } from '@/src/types';
-import { useAppStore } from '@/src/store';
+import { useAppStore, useProjectStore } from '@/src/store';
 
 export default function ProjectsScreen() {
-  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
+  // Load fonts locally to ensure they're available
+  const [fontsLoaded] = useFonts({
+    NanumPenScript_400Regular,
+  });
+  
   const { isInitialized } = useAppStore();
+  const { projects, setProjects } = useProjectStore();
+  const { theme } = useTheme();
   const projectService = ProjectService.getInstance();
+  const styles = createStyles(theme, fontsLoaded);
 
   useEffect(() => {
     if (isInitialized) {
@@ -65,91 +73,47 @@ export default function ProjectsScreen() {
     router.push(`/project/${project.id}`);
   };
 
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const getProjectTypeIcon = (type: string): keyof typeof Ionicons.glyphMap => {
-    return type === 'timeline' ? 'calendar' : 'albums';
-  };
-
-  const getProjectTypeColor = (type: string): string => {
-    return type === 'timeline' ? Colors.sage : Colors.lavender;
-  };
-
   const renderProject = ({ item: project }: { item: Project }) => (
-    <MineCard
-      onPress={() => handleProjectPress(project)}
+    <DualToneProjectCard
+      project={project}
+      snippetCount={0} // TODO: Calculate from actual snippets
+      totalDuration={0} // TODO: Calculate from actual snippets
+      progress={Math.floor(Math.random() * 100)} // Mock progress for now
+      onPress={handleProjectPress}
       style={styles.projectCard}
-    >
-      <View style={styles.projectHeader}>
-        <View style={styles.projectInfo}>
-          <View style={styles.projectTitleRow}>
-            <Text style={styles.projectName}>{project.name}</Text>
-            <View style={[
-              styles.projectTypeBadge,
-              { backgroundColor: getProjectTypeColor(project.type) }
-            ]}>
-              <Ionicons 
-                name={getProjectTypeIcon(project.type)} 
-                size={12} 
-                color={Colors.white} 
-              />
-              <Text style={styles.projectTypeText}>
-                {project.type === 'timeline' ? 'Timeline' : 'Freestyle'}
-              </Text>
-            </View>
-          </View>
-          
-          <View style={styles.projectMeta}>
-            <Text style={styles.projectMetaText}>
-              Created {formatDate(project.createdAt)}
-            </Text>
-            <Text style={styles.projectMetaText}>•</Text>
-            <Text style={styles.projectMetaText}>
-              Updated {formatDate(project.updatedAt)}
-            </Text>
-          </View>
-        </View>
-      </View>
-      
-      <View style={styles.projectStats}>
-        <View style={styles.statItem}>
-          <Ionicons name="videocam" size={16} color={Colors.sage} />
-          <Text style={styles.statText}>0 videos</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Ionicons name="time" size={16} color={Colors.textSecondary} />
-          <Text style={styles.statText}>0s total</Text>
-        </View>
-      </View>
-    </MineCard>
+    />
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="folder-open-outline" size={64} color={Colors.disabled} />
-      <Text style={styles.emptyTitle}>No Projects Yet</Text>
-      <Text style={styles.emptyMessage}>
+      <Ionicons name="folder-open-outline" size={64} color={theme.colors.textTertiary} />
+      <ThemedText variant="h2" style={styles.emptyTitle}>
+        No Projects Yet
+      </ThemedText>
+      <ThemedText variant="body" color="secondary" style={styles.emptyMessage}>
         Create your first video journal project to get started capturing your daily moments.
-      </Text>
-      <MineButton
-        onPress={handleCreateProject}
-        style={styles.emptyButton}
-      >
-        Create First Project
-      </MineButton>
+      </ThemedText>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Projects</Text>
+        <ThemedText variant="h2" style={styles.headerTitle}>Hello Paul</ThemedText>
+        <View style={styles.avatarContainer}>
+          <Image 
+            source={{ uri: 'https://i.pravatar.cc/150?img=1' }}
+            style={styles.avatar}
+          />
+        </View>
+      </View>
+
+      {/* Bento Stats Grid */}
+      <BentoStatsGrid />
+
+      {/* My Projects Section Header */}
+      <View style={styles.sectionHeader}>
+        <ThemedText variant="h2" style={styles.sectionTitle}>My Projects</ThemedText>
       </View>
 
       <FlatList
@@ -162,148 +126,91 @@ export default function ProjectsScreen() {
         ListEmptyComponent={!loading ? renderEmptyState : null}
         showsVerticalScrollIndicator={false}
       />
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={handleCreateProject}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="add" size={24} color={Colors.white} />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, fontsLoaded: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.offWhite,
+    backgroundColor: theme.colors.background, // Pure white background
   },
   
-  // Header
+  // Header - Clean and minimal with avatar
   header: {
-    backgroundColor: Colors.white,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between', // Space between text and avatar
+    paddingHorizontal: theme.spacing.lg, // 24px generous spacing
+    paddingVertical: theme.spacing.lg,
+  },
+  avatarContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: theme.colors.mint, // Project's mint color
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 2, // Creates the ring effect
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   headerTitle: {
-    ...Typography.h1,
-    color: Colors.textPrimary,
+    fontFamily: fontsLoaded ? 'NanumPenScript_400Regular' : 'System', // Nanum script font with fallback
+    fontWeight: 'normal',
+    fontSize: 45, // Increased from 20px for better visibility with Nanum font
+    flex: 1, // Takes available space
+  },
+  headerTitle2: {
+    fontFamily: fontsLoaded ? 'NanumPenScript_400Regular' : 'System', // Nanum script font with fallback
+    fontWeight: 'normal',
+    fontSize: 40, // Increased from 20px for better visibility with Nanum font
+    flex: 1, // Takes available space
   },
   
-  // List
+  // Section Header for My Projects
+  sectionHeader: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xl, // More space from BentoGrid
+    paddingBottom: 0, // No space to FlatList
+  },
+  sectionTitle: {
+    // fontFamily: 'Inter-SemiBold',
+    // fontWeight: '600',
+    fontFamily: fontsLoaded ? 'NanumPenScript_400Regular' : 'System', // Nanum script font with fallback
+    fontWeight: 'normal',
+    fontSize: 35,
+  },
+  
+  // List with generous spacing
   listContainer: {
-    padding: Spacing.lg,
-    paddingBottom: 100, // Space for FAB
+    paddingHorizontal: theme.spacing.lg, // Keep horizontal padding
+    paddingTop: theme.spacing.sm, // Reduced top padding
+    paddingBottom: 120, // Space for floating tab bar
   },
   
-  // Project Card
+  // Project Card with reduced spacing
   projectCard: {
-    marginBottom: Spacing.lg,
-  },
-  projectHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.md,
-  },
-  projectInfo: {
-    flex: 1,
-  },
-  projectTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
-  },
-  projectName: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-    flex: 1,
-    marginRight: Spacing.md,
-  },
-  projectTypeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 12,
-    gap: Spacing.xs,
-  },
-  projectTypeText: {
-    ...Typography.caption,
-    color: Colors.white,
-    fontWeight: '600',
-  },
-  projectMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  projectMetaText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
+    marginBottom: theme.spacing.sm, // Reduced from lg (24px) to md (16px)
   },
   
-  // Project Stats
-  projectStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  statText: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  
-  // Empty State
+  // Empty State - Centered and clean
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xxl * 2,
-    paddingHorizontal: Spacing.xl,
+    paddingVertical: theme.spacing.xxl * 2,
+    paddingHorizontal: theme.spacing.xl,
   },
   emptyTitle: {
-    ...Typography.h2,
-    color: Colors.textPrimary,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
   },
   emptyMessage: {
-    ...Typography.body,
-    color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: Spacing.xl,
     lineHeight: 24,
-  },
-  emptyButton: {
-    marginTop: Spacing.md,
-  },
-  
-  // FAB
-  fab: {
-    position: 'absolute',
-    bottom: Spacing.xl,
-    right: Spacing.xl,
-    width: TouchTargets.fab,
-    height: TouchTargets.fab,
-    borderRadius: TouchTargets.fab / 2,
-    backgroundColor: Colors.sage,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
-    elevation: 8,
-    zIndex: ZIndex.fab,
   },
 });

@@ -50,7 +50,7 @@ export default function MyScreen() {
 ## 🎨 Visual Features
 
 ### Blur Background
-- **Height**: Matches keyboard height exactly
+- **Height**: Matches raw keyboard height exactly (no offsets)
 - **Intensity**: 20 (subtle professional look)
 - **Tint**: `systemMaterial` (adapts to system theme)
 - **Animation**: Smooth fade in/out with keyboard
@@ -70,16 +70,33 @@ SafeAreaView (flex: 1)
 ├── Header (fixed)
 ├── KeyboardAvoidingContainer (flex: 1)
 │   ├── ScrollView (content)
-│   ├── KeyboardBlurBackground (blur overlay)
-│   └── KeyboardSpacer (invisible spacer)
+│   ├── KeyboardBlurBackground (raw keyboard height)
+│   └── KeyboardSpacer (keyboard height + offsets)
 └── Footer (fixed)
 ```
 
 ### Key Principles
 1. **Container**: Always use `flex: 1` for main container
 2. **Content**: Scrollable area for form inputs
-3. **Spacer**: Invisible view that pushes content up
-4. **Blur**: Visual separation between content and keyboard
+3. **Spacer**: Invisible view that pushes content up (includes offsets)
+4. **Blur**: Visual separation using raw keyboard height (no offsets)
+
+## 🔧 Technical Implementation
+
+### Dual Height System
+The keyboard system uses two different height measurements:
+
+1. **Raw Keyboard Height** (`useRawKeyboardHeight`)
+   - Used by: `KeyboardBlurBackground`
+   - Purpose: Match keyboard dimensions exactly
+   - Value: Pure keyboard height from system
+
+2. **Adjusted Keyboard Height** (`useKeyboardController`)
+   - Used by: `KeyboardSpacer`
+   - Purpose: Push content up with proper spacing
+   - Value: Keyboard height + verticalOffset + toolbar offset
+
+This ensures the blur background matches the keyboard perfectly while the spacer provides appropriate content positioning.
 
 ## ⚙️ Configuration Options
 

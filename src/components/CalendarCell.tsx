@@ -136,41 +136,36 @@ export function CalendarCell({
 
 const styles = StyleSheet.create({
   base: {
-    width: TouchTargets.minimum,
-    height: TouchTargets.minimum,
-    borderRadius: BorderRadius.md, // 12px rounded corners
-    backgroundColor: Colors.offWhite,
+    width: 36,
+    height: 36,
+    borderRadius: 18, // Perfect circle
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   filled: {
-    backgroundColor: Colors.white,
-    borderColor: Colors.sage, // Sage borders for filled days
-    borderWidth: 2,
+    backgroundColor: '#FFE4E1', // Light pink background for dates with videos
   },
   today: {
-    borderColor: Colors.lavender, // Lavender border for today
-    borderWidth: 2,
+    backgroundColor: Colors.black, // Black circular background for today
   },
   thumbnailContainer: {
     width: '100%',
     height: '100%',
-    borderRadius: BorderRadius.sm, // 8px nested radius (12px - 4px = 8px)
+    borderRadius: 18, // Perfect circle
     overflow: 'hidden',
     position: 'relative',
   },
   thumbnail: {
     width: '100%',
     height: '100%',
-    borderRadius: BorderRadius.sm, // 8px nested radius for video previews
+    borderRadius: 18, // Perfect circle for video previews
   },
   dayNumberOverlay: {
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.black,
     borderRadius: BorderRadius.xs,
     paddingHorizontal: 4,
     paddingVertical: 2,
@@ -178,29 +173,33 @@ const styles = StyleSheet.create({
   overlayText: {
     ...Typography.caption,
     color: Colors.white,
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: '600',
+    fontFamily: 'Inter-Regular',
   },
   dayText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
+    ...Typography.bodySmall,
+    color: Colors.black, // Black text for regular dates
     fontWeight: '500',
+    fontFamily: 'Inter-Regular',
   },
   filledText: {
-    color: Colors.sage,
+    color: Colors.black,
     fontWeight: '600',
+    fontFamily: 'Inter-Regular',
   },
   todayText: {
-    color: Colors.lavender,
+    color: Colors.white, // White text on black background for today
     fontWeight: '600',
+    fontFamily: 'Inter-Bold',
   },
   todayIndicator: {
     position: 'absolute',
-    bottom: 4,
+    bottom: 2,
     alignSelf: 'center',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.lavender,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.white,
   },
 });

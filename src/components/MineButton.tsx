@@ -59,7 +59,7 @@ export function MineButton({
     >
       {loading ? (
         <ActivityIndicator 
-          color={variant === 'primary' ? Colors.white : Colors.sage} 
+          color={variant === 'primary' ? Colors.background : Colors.surface} 
           size="small"
         />
       ) : (
@@ -78,44 +78,44 @@ const styles = StyleSheet.create({
   
   // Variants
   primary: {
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xxl,
-    ...Shadows.card,
+    // Removed shadows for flat design
   },
   secondary: {
-    backgroundColor: Colors.white,
+    backgroundColor: 'transparent',
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.sage,
+    borderColor: Colors.surface,
   },
   fab: {
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.surface,
     borderRadius: TouchTargets.fab / 2,
     width: TouchTargets.fab,
     height: TouchTargets.fab,
-    ...Shadows.fab,
+    // Removed shadows for flat design
   },
   
-  // Sizes
+  // Sizes - reduced padding
   small: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 36,
+    paddingHorizontal: 12,  // Reduced from 16
+    paddingVertical: 6,     // Reduced from 8
+    minHeight: 32,          // Reduced from 36
   },
   medium: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 16,  // Reduced from 24
+    paddingVertical: 8,     // Reduced from 12
     minHeight: TouchTargets.button,
   },
   large: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    minHeight: 64,
+    paddingHorizontal: 24,  // Reduced from 32
+    paddingVertical: 12,    // Reduced from 16
+    minHeight: 56,          // Reduced from 64
   },
   
   // Disabled state
   disabled: {
-    opacity: 0.5,
+    opacity: 0.3,  // Reduced opacity for better contrast in black/white
   },
   
   // Text styles
@@ -124,15 +124,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   primaryText: {
-    color: Colors.white,
+    color: Colors.background,  // Inverted color for contrast
     fontSize: Typography.body.fontSize,
   },
   secondaryText: {
-    color: Colors.sage,
+    color: Colors.surface,
     fontSize: Typography.body.fontSize,
   },
   fabText: {
-    color: Colors.white,
+    color: Colors.background,  // Inverted color for contrast
     fontSize: 24,
   },
   

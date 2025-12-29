@@ -1,67 +1,65 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
+import { router } from 'expo-router';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { Colors } from '@/constants/theme';
-import { Colors as DesignColors } from '@/src/design-system';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FloatingTabBar, TabItem } from '@/src/components';
+import { useTheme } from '@/src/design-system';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { theme } = useTheme();
+
+  const tabs: TabItem[] = [
+    {
+      key: 'index',
+      title: 'Projects',
+      icon: 'folder-outline',
+      isActive: false, // This would be managed by router state
+    },
+    {
+      key: 'settings',
+      title: 'Settings',
+      icon: 'settings-outline',
+      isActive: false,
+    },
+  ];
+
+  const handleTabPress = (tabKey: string) => {
+    switch (tabKey) {
+      case 'index':
+        router.push('/(tabs)');
+        break;
+      case 'settings':
+        router.push('/(tabs)/settings');
+        break;
+      default:
+        router.push('/(tabs)');
+    }
+  };
+
+  const handleCapturePress = () => {
+    router.push('/create-project');
+  };
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: DesignColors.sage,
-        tabBarInactiveTintColor: DesignColors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: DesignColors.white,
-          borderTopColor: DesignColors.border,
-          borderTopWidth: 1,
-        },
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Projects',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'folder' : 'folder-outline'} 
-              size={24} 
-              color={color} 
-            />
-          ),
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { display: 'none' }, // Hide default tab bar
         }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Capture',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'videocam' : 'videocam-outline'} 
-              size={24} 
-              color={color} 
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? 'settings' : 'settings-outline'} 
-              size={24} 
-              color={color} 
-            />
-          ),
-        }}
-      />
-    </Tabs>
+        tabBar={() => (
+          <FloatingTabBar
+            tabs={tabs}
+            onTabPress={handleTabPress}
+            onCapturePress={handleCapturePress}
+          />
+        )}
+      >
+        <Tabs.Screen name="index" />
+        <Tabs.Screen name="explore" />
+        <Tabs.Screen name="settings" />
+      </Tabs>
+    </View>
   );
 }

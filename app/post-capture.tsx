@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { Colors, Spacing, Typography, TouchTargets } from '@/src/design-system';
-import { MineButton, MineInput, VideoPlayer, MineInputRef, KeyboardAvoidingContainer } from '@/src/components';
+import { MineButton, MineInput, VideoPlayer, MineInputRef, KeyboardAvoidingContainer, KeyboardSpacer } from '@/src/components';
 import { SnippetService } from '@/src/services/SnippetService';
 import { VideoService } from '@/src/services/VideoService';
 import { useKeyboard } from '@/src/hooks/useKeyboard';
@@ -133,7 +133,8 @@ export default function PostCapture() {
         containerStyle={styles.content}
         contentContainerStyle={styles.scrollContent}
         hasToolbar={false}
-        verticalOffset={0}
+        verticalOffset={62} // Account for button height + padding
+        showBlurBackground={false} // We'll handle the button positioning manually
       >
         {/* Video Preview Thumbnail */}
         <View style={styles.videoPreview}>
@@ -221,8 +222,8 @@ export default function PostCapture() {
         </View>
       </KeyboardAvoidingContainer>
 
-      {/* Save Button */}
-      <View style={styles.footer}>
+      {/* Save Button - positioned above keyboard */}
+      <View style={styles.buttonContainer}>
         <MineButton
           onPress={handleSave}
           loading={processing}
@@ -231,6 +232,9 @@ export default function PostCapture() {
           Save Video
         </MineButton>
       </View>
+
+      {/* Keyboard spacer to push button above keyboard */}
+      <KeyboardSpacer />
 
       {/* Video Preview Modal */}
       {showPreview && videoPath && (
@@ -287,7 +291,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.lg,
   },
   
   // Video Preview
@@ -370,10 +374,15 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   
-  // Footer
-  footer: {
+  // Button Container - positioned above keyboard
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
+    backgroundColor: Colors.white,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },

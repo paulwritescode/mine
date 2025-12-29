@@ -3,16 +3,21 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { useFonts, NanumPenScript_400Regular } from '@expo-google-fonts/nanum-pen-script';
+import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { databaseService } from '@/src/services/DatabaseService';
 import { useAppStore } from '@/src/store';
-import { ThemeProvider as DesignThemeProvider, Colors as DesignColors } from '@/src/design-system';
+import { ThemeProvider as DesignThemeProvider, Colors as DesignColors, getTheme, Theme } from '@/src/design-system';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -20,10 +25,21 @@ export default function RootLayout() {
   const [initError, setInitError] = useState<string | null>(null);
   const { setInitialized, setError } = useAppStore();
 
+  // Load fonts
+  const [fontsLoaded] = useFonts({
+    NanumPenScript_400Regular,
+  });
+
+  // Get theme-aware colors (default to light for Soft-Tech aesthetic)
+  const theme = getTheme('light');
+  const styles = createStyles(theme);
+
   useEffect(() => {
-    console.log(`🚀 [RootLayout] App initialization starting...`);
-    initializeApp();
-  }, []);
+    if (fontsLoaded) {
+      console.log(`🚀 [RootLayout] App initialization starting...`);
+      initializeApp();
+    }
+  }, [fontsLoaded]);
 
   const initializeApp = async () => {
     try {
@@ -45,14 +61,21 @@ export default function RootLayout() {
       setError(errorMessage);
     } finally {
       setIsInitializing(false);
+      // Hide splash screen after initialization
+      await SplashScreen.hideAsync();
     }
   };
 
+  // Don't render anything until fonts are loaded
+  if (!fontsLoaded) {
+    return null;
+  }
+
   if (isInitializing) {
     return (
-      <DesignThemeProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
+      <DesignThemeProvider mode="light">
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={DesignColors.sage} />
+          <ActivityIndicator size="large" color={theme.colors.textPrimary} />
           <Text style={styles.loadingText}>Initializing Mine...</Text>
         </View>
       </DesignThemeProvider>
@@ -61,7 +84,7 @@ export default function RootLayout() {
 
   if (initError) {
     return (
-      <DesignThemeProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
+      <DesignThemeProvider mode="light">
         <View style={styles.errorContainer}>
           <Text style={styles.errorTitle}>Initialization Error</Text>
           <Text style={styles.errorMessage}>{initError}</Text>
@@ -75,7 +98,7 @@ export default function RootLayout() {
 
   return (
     <KeyboardProvider>
-      <DesignThemeProvider mode={colorScheme === 'dark' ? 'dark' : 'light'}>
+      <DesignThemeProvider mode="light">
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
@@ -83,41 +106,42 @@ export default function RootLayout() {
           <Stack.Screen name="post-capture" options={{ headerShown: false }} />
           <Stack.Screen name="create-project" options={{ headerShown: false }} />
           <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="calendar-demo" options={{ headerShown: false }} />
         </Stack>
-        <StatusBar style="auto" />
+        <StatusBar style="light" />
       </DesignThemeProvider>
     </KeyboardProvider>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: DesignColors.white,
+    backgroundColor: theme.colors.background,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: DesignColors.textSecondary,
+    color: theme.colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: DesignColors.white,
+    backgroundColor: theme.colors.background,
     padding: 20,
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: DesignColors.error,
+    color: theme.colors.error,
     marginBottom: 8,
   },
   errorMessage: {
     fontSize: 14,
-    color: DesignColors.textSecondary,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
 });

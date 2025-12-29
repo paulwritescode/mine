@@ -1,7 +1,7 @@
 /**
  * Mine Design System - Theme Configuration
  * 
- * Provides theme context and utilities for the Mine app design system.
+ * Soft-Tech minimalist theme with high-contrast dual-tone design.
  */
 
 import { Colors, Spacing, BorderRadius, Typography, Shadows, ZIndex, Animation, TouchTargets } from './tokens';
@@ -17,8 +17,20 @@ export interface Theme {
   touchTargets: typeof TouchTargets;
 }
 
+// Light theme - Soft-Tech aesthetic (primary theme)
 export const lightTheme: Theme = {
-  colors: Colors,
+  colors: {
+    ...Colors,
+    background: Colors.white,          // Pure white background
+    surface: Colors.white,             // Pure white surfaces
+    surfaceElevated: Colors.white,     // White elevated surfaces
+    textPrimary: Colors.black,         // Black text
+    textSecondary: Colors.textSecondary, // Gray secondary text
+    textTertiary: Colors.textTertiary,   // Light gray tertiary text
+    textInverse: Colors.white,         // White text for dark surfaces
+    border: Colors.border,             // Light borders
+    borderStrong: Colors.borderStrong, // Strong black borders
+  },
   spacing: Spacing,
   borderRadius: BorderRadius,
   typography: Typography,
@@ -28,18 +40,20 @@ export const lightTheme: Theme = {
   touchTargets: TouchTargets
 };
 
-// Dark theme adjustments (for future implementation)
+// Dark theme - High contrast version
 export const darkTheme: Theme = {
   ...lightTheme,
   colors: {
     ...Colors,
-    // Adjust colors for dark mode
-    white: '#121212' as any,
-    offWhite: '#1E1E1E' as any,
-    textPrimary: '#E0E0E0' as any,
-    textSecondary: '#BDBDBD' as any,
-    border: '#333333' as any,
-    // Sage and lavender remain the same for brand consistency
+    background: Colors.black,          // Black background
+    surface: Colors.black,             // Black surfaces
+    surfaceElevated: Colors.black,     // Black elevated surfaces
+    textPrimary: Colors.white,         // White text
+    textSecondary: '#CCCCCC',          // Light gray secondary text
+    textTertiary: '#999999',           // Gray tertiary text
+    textInverse: Colors.black,         // Black text for light surfaces
+    border: '#333333',                 // Dark borders
+    borderStrong: Colors.white,        // Strong white borders
   }
 };
 
@@ -50,6 +64,7 @@ export const getTheme = (mode: ThemeMode = 'light'): Theme => {
     case 'dark':
       return darkTheme;
     case 'light':
+    case 'system': // Default to light for the Soft-Tech aesthetic
     default:
       return lightTheme;
   }

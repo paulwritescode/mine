@@ -9,19 +9,9 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useKeyboardController } from '../hooks/useKeyboardController';
+import { useRawKeyboardHeight } from '../hooks/useRawKeyboardHeight';
 
 interface KeyboardBlurBackgroundProps {
-  /**
-   * Additional vertical offset for toolbars or bottom navigation
-   */
-  verticalOffset?: number;
-  
-  /**
-   * Whether to include standard toolbar offset (42px)
-   */
-  hasToolbar?: boolean;
-  
   /**
    * Blur intensity (default: 20)
    */
@@ -36,21 +26,16 @@ interface KeyboardBlurBackgroundProps {
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 export function KeyboardBlurBackground({ 
-  verticalOffset = 0, 
-  hasToolbar = false,
   intensity = 20,
   tint = 'systemMaterial'
 }: KeyboardBlurBackgroundProps) {
-  const { keyboardHeight } = useKeyboardController({ 
-    verticalOffset, 
-    hasToolbar 
-  });
+  const { rawKeyboardHeight } = useRawKeyboardHeight();
 
   // Animated style that matches keyboard height exactly
   const blurStyle = useAnimatedStyle(() => {
     return {
-      height: keyboardHeight.value,
-      opacity: keyboardHeight.value > 0 ? 1 : 0,
+      height: rawKeyboardHeight.value,
+      opacity: rawKeyboardHeight.value > 0 ? 1 : 0,
     };
   }, []);
 

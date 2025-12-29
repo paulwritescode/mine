@@ -5,3 +5,5 @@
  */
 
 export * from './useKeyboard';
+export * from './useKeyboardController';
+export * from './useRawKeyboardHeight';

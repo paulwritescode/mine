@@ -8,25 +8,25 @@
 import { Platform } from 'react-native';
 import { Colors as DesignColors } from '@/src/design-system';
 
-// Use sage green as the primary tint color
-const tintColorLight = DesignColors.sage;
+// Use pure black and white for minimalist design
+const tintColorLight = DesignColors.black;
 const tintColorDark = DesignColors.white;
 
 export const Colors = {
   light: {
-    text: DesignColors.textPrimary,
+    text: DesignColors.black,
     background: DesignColors.white,
     tint: tintColorLight,
-    icon: DesignColors.textSecondary,
-    tabIconDefault: DesignColors.textSecondary,
+    icon: DesignColors.black,
+    tabIconDefault: DesignColors.black,
     tabIconSelected: tintColorLight,
   },
   dark: {
     text: DesignColors.white,
-    background: '#151718',
+    background: DesignColors.black,
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: DesignColors.white,
+    tabIconDefault: DesignColors.white,
     tabIconSelected: tintColorDark,
   },
 };

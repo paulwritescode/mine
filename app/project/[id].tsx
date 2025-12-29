@@ -8,16 +8,14 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 
-import { Colors, Spacing, Typography, TouchTargets, ZIndex } from '@/src/design-system';
-import { CalendarGrid, VideoPlayer } from '@/src/components';
+import { Colors, Typography } from '@/src/design-system';
+import { EnhancedCalendar, VideoPlayer, ProjectHeader } from '@/src/components';
 import { ProjectService } from '@/src/services/ProjectService';
 import { SnippetService } from '@/src/services/SnippetService';
 import { TimelineService } from '@/src/services/TimelineService';
@@ -32,6 +30,7 @@ export default function ProjectDetail() {
   const [selectedVideo, setSelectedVideo] = useState<VideoSnippet | null>(null);
   const [hasNextVideo, setHasNextVideo] = useState(false);
   const [hasPreviousVideo, setHasPreviousVideo] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const projectService = ProjectService.getInstance();
   const snippetService = SnippetService.getInstance();
@@ -81,6 +80,82 @@ export default function ProjectDetail() {
       // Navigate to camera for this date
       router.push(`/camera?projectId=${id}&date=${dateString}`);
     }
+  };
+
+  const handlePlayVideo = async (snippet: VideoSnippet) => {
+    await setSelectedVideoWithSequence(snippet);
+  };
+
+  const handleRecordVideo = async (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    router.push(`/camera?projectId=${id}&date=${dateString}`);
+  };
+
+  const handleDeleteVideo = async (snippet: VideoSnippet) => {
+    try {
+      await snippetService.deleteSnippet(snippet.id);
+      // Reload snippets after deletion
+      await loadProjectData();
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Failed to delete video:', error);
+      Alert.alert('Error', 'Failed to delete video. Please try again.');
+    }
+  };
+
+  const handleRenameProject = async (project: Project) => {
+    Alert.prompt(
+      'Rename Project',
+      'Enter a new name for your project:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Rename',
+          onPress: async (newName?: string) => {
+            if (newName && newName.trim()) {
+              try {
+                await projectService.updateProject(project.id, { name: newName.trim() });
+                await loadProjectData();
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              } catch (error) {
+                console.error('Failed to rename project:', error);
+                Alert.alert('Error', 'Failed to rename project. Please try again.');
+              }
+            }
+          },
+        },
+      ],
+      'plain-text',
+      project.name
+    );
+  };
+
+  const handleDeleteProject = async (project: Project) => {
+    try {
+      await projectService.deleteProject(project.id);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.back();
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      Alert.alert('Error', 'Failed to delete project. Please try again.');
+    }
+  };
+
+  const handleShareProject = async (project: Project) => {
+    Alert.alert(
+      'Share Project',
+      `Share "${project.name}" with others?\n\nThis will create a shareable link with all videos in this project.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Share',
+          onPress: () => {
+            // TODO: Implement actual sharing functionality
+            Alert.alert('Coming Soon', 'Project sharing will be available in a future update.');
+          },
+        },
+      ]
+    );
   };
 
   const setSelectedVideoWithSequence = async (snippet: VideoSnippet) => {
@@ -133,14 +208,6 @@ export default function ProjectDetail() {
     setHasPreviousVideo(false);
   };
 
-  const getProjectTypeIcon = (type: string): keyof typeof Ionicons.glyphMap => {
-    return type === 'timeline' ? 'calendar' : 'albums';
-  };
-
-  const getProjectTypeColor = (type: string): string => {
-    return type === 'timeline' ? Colors.sage : Colors.lavender;
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -163,45 +230,33 @@ export default function ProjectDetail() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-        
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>{project.name}</Text>
-          <View style={styles.projectTypeBadge}>
-            <Ionicons 
-              name={getProjectTypeIcon(project.type)} 
-              size={12} 
-              color={Colors.white} 
-            />
-            <Text style={styles.projectTypeText}>
-              {project.type === 'timeline' ? 'Timeline' : 'Freestyle'}
-            </Text>
-          </View>
+      {/* Mint Background Container for Header and Calendar */}
+      <View style={styles.mintContainer}>
+        {/* Project Header */}
+        <ProjectHeader
+          project={project}
+          onBack={() => router.back()}
+          onRename={handleRenameProject}
+          onDelete={handleDeleteProject}
+          onShare={handleShareProject}
+        />
+
+        {/* Enhanced Calendar */}
+        <View style={styles.calendarContainer}>
+          <EnhancedCalendar
+            snippets={snippets}
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            onPlayVideo={handlePlayVideo}
+            onRecordVideo={handleRecordVideo}
+            onDeleteVideo={handleDeleteVideo}
+          />
         </View>
-        
-        <TouchableOpacity
-          onPress={() => Alert.alert('Settings', 'Project settings coming soon')}
-          style={styles.settingsButton}
-        >
-          <Ionicons name="settings-outline" size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
       </View>
 
-      {/* Calendar */}
-      <View style={styles.calendarContainer}>
-        <CalendarGrid
-          snippets={snippets}
-          currentDate={new Date()}
-          onDateChange={() => {}} // Add empty handler for now
-          onCellPress={handleDatePress}
-        />
+      {/* White Background Container for Lower Half */}
+      <View style={styles.whiteContainer}>
+        {/* This space can be used for additional content in the future */}
       </View>
 
       {/* Video Player Modal */}
@@ -227,61 +282,24 @@ export default function ProjectDetail() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.offWhite,
+    backgroundColor: Colors.white,
   },
   
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+  // Mint Background Container - Half Screen
+  mintContainer: {
+    flex: 0.5, // Half screen height
+    backgroundColor: Colors.mint,
+  },
+  
+  // White Background Container - Half Screen
+  whiteContainer: {
+    flex: 0.5, // Half screen height
     backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  backButton: {
-    width: TouchTargets.minimum,
-    height: TouchTargets.minimum,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  headerInfo: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
-  },
-  projectTypeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 12,
-    backgroundColor: Colors.sage,
-    gap: Spacing.xs,
-  },
-  projectTypeText: {
-    ...Typography.caption,
-    color: Colors.white,
-    fontWeight: '600',
-  },
-  settingsButton: {
-    width: TouchTargets.minimum,
-    height: TouchTargets.minimum,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: Spacing.md,
   },
   
   // Calendar
   calendarContainer: {
     flex: 1,
-    padding: Spacing.lg,
   },
   
   // Loading & Error States
@@ -289,6 +307,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.white,
   },
   loadingText: {
     ...Typography.body,
@@ -298,6 +317,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.white,
   },
   errorText: {
     ...Typography.body,

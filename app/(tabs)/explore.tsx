@@ -177,7 +177,7 @@ export default function CaptureScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.offWhite,
+    backgroundColor: Colors.background,
   },
   
   // Loading
@@ -191,13 +191,12 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   
-  // Header
+  // Header - removed separator
   header: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    // Removed border separator
   },
   headerTitle: {
     ...Typography.h1,

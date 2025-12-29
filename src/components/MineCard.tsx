@@ -51,11 +51,11 @@ export function MineCard({
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
-    ...Shadows.card,
+    // Removed shadows for flat design
   },
   disabled: {
     opacity: 0.5,

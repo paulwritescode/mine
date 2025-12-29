@@ -3,6 +3,7 @@
 export interface Project {
   id: string;
   name: string;
+  label?: string; // Project label/tag
   type: 'timeline' | 'freestyle';
   createdAt: Date;
   updatedAt: Date;

@@ -100,8 +100,6 @@ export function KeyboardAvoidingContainer({
       {/* Blur background that matches keyboard height */}
       {showBlurBackground && (
         <KeyboardBlurBackground 
-          verticalOffset={verticalOffset}
-          hasToolbar={hasToolbar}
           intensity={blurIntensity}
         />
       )}

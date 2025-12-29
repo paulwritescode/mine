@@ -14,7 +14,7 @@ export class DatabaseService {
   private static instance: DatabaseService;
   private isInitialized: boolean = false;
   private database: SQLite.SQLiteDatabase | null = null;
-  private readonly currentVersion = 1;
+  private readonly currentVersion = 2;
 
   private constructor() {}
 
@@ -45,7 +45,21 @@ export class DatabaseService {
       // Validate database integrity
       const isValid = await this.validateDatabaseIntegrity();
       if (!isValid) {
-        throw new Error('Database integrity validation failed');
+        console.warn('Database integrity validation failed, attempting recovery...');
+        
+        // Try to recover by resetting the database
+        await this.resetDatabase();
+        
+        // Re-run migrations after reset
+        await this.runMigrations();
+        
+        // Validate again
+        const isValidAfterReset = await this.validateDatabaseIntegrity();
+        if (!isValidAfterReset) {
+          throw new Error('Database integrity validation failed even after reset');
+        }
+        
+        console.log('Database recovered successfully after reset');
       }
       
       console.log('Database service initialized with SQLite');
@@ -76,6 +90,7 @@ export class DatabaseService {
             CREATE TABLE IF NOT EXISTS projects (
               id TEXT PRIMARY KEY,
               name TEXT NOT NULL,
+              label TEXT,
               type TEXT NOT NULL CHECK(type IN ('timeline', 'freestyle')),
               created_at INTEGER NOT NULL,
               updated_at INTEGER NOT NULL,
@@ -148,6 +163,23 @@ export class DatabaseService {
           await db.execAsync('DROP TABLE IF EXISTS projects;');
           await db.execAsync('DROP TABLE IF EXISTS settings;');
           await db.execAsync('DROP TABLE IF EXISTS schema_migrations;');
+        }
+      },
+      {
+        version: 2,
+        name: 'add_project_label_column',
+        up: async (db: SQLite.SQLiteDatabase) => {
+          // Add label column to projects table
+          await db.execAsync(`
+            ALTER TABLE projects ADD COLUMN label TEXT;
+          `);
+          
+          console.log('Added label column to projects table');
+        },
+        down: async (db: SQLite.SQLiteDatabase) => {
+          // SQLite doesn't support DROP COLUMN, so we'd need to recreate the table
+          // For simplicity, we'll leave the column in place during rollback
+          console.log('Rollback: label column will remain in projects table (SQLite limitation)');
         }
       }
     ];
@@ -283,8 +315,22 @@ export class DatabaseService {
       `);
       
       if (foreignKeyResult.length > 0) {
-        console.error('Foreign key constraint violations found:', foreignKeyResult);
-        return false;
+        console.warn('Foreign key constraint violations found, attempting to fix:', foreignKeyResult);
+        
+        // Attempt to fix foreign key violations by cleaning up orphaned records
+        await this.fixForeignKeyViolations();
+        
+        // Re-check foreign keys after cleanup
+        const recheckResult = await connectionManager.executeQueries(`
+          PRAGMA foreign_key_check;
+        `);
+        
+        if (recheckResult.length > 0) {
+          console.error('Foreign key constraint violations persist after cleanup:', recheckResult);
+          return false;
+        }
+        
+        console.log('Foreign key violations fixed successfully');
       }
 
       console.log('Database integrity validation passed');
@@ -292,6 +338,35 @@ export class DatabaseService {
     } catch (error) {
       console.error('Database integrity validation failed:', error);
       return false;
+    }
+  }
+
+  private async fixForeignKeyViolations(): Promise<void> {
+    try {
+      console.log('Attempting to fix foreign key violations...');
+      
+      // Clean up orphaned snippets (snippets without valid project references)
+      const orphanedSnippetsResult = await connectionManager.executeQuery<{ count: number }>(`
+        SELECT COUNT(*) as count FROM snippets 
+        WHERE project_id NOT IN (SELECT id FROM projects);
+      `);
+      
+      if (orphanedSnippetsResult && orphanedSnippetsResult.count > 0) {
+        console.log(`Found ${orphanedSnippetsResult.count} orphaned snippets, removing them...`);
+        
+        await connectionManager.executeRaw(`
+          DELETE FROM snippets 
+          WHERE project_id NOT IN (SELECT id FROM projects);
+        `);
+        
+        console.log('Orphaned snippets removed successfully');
+      }
+      
+      // You could add more cleanup logic here for other potential violations
+      
+    } catch (error) {
+      console.error('Failed to fix foreign key violations:', error);
+      throw error;
     }
   }
 
@@ -316,6 +391,23 @@ export class DatabaseService {
     this.database = null;
     this.isInitialized = false;
     console.log('Database service closed');
+  }
+
+  public async resetDatabase(): Promise<void> {
+    try {
+      console.log('Resetting database...');
+      
+      // Drop all tables in reverse order to handle foreign key constraints
+      await connectionManager.executeRaw('DROP TABLE IF EXISTS snippets;');
+      await connectionManager.executeRaw('DROP TABLE IF EXISTS projects;');
+      await connectionManager.executeRaw('DROP TABLE IF EXISTS settings;');
+      await connectionManager.executeRaw('DROP TABLE IF EXISTS schema_migrations;');
+      
+      console.log('Database reset completed');
+    } catch (error) {
+      console.error('Failed to reset database:', error);
+      throw error;
+    }
   }
 }
 

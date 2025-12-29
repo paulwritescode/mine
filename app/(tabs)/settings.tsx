@@ -13,12 +13,13 @@ import * as Haptics from 'expo-haptics';
 
 import { Colors, Spacing, Typography, TouchTargets, BorderRadius } from '@/src/design-system';
 import { MineCard } from '@/src/components';
+import { ThemeToggle, ThemeMode } from '@/src/components/ThemeToggle';
 
 interface AppSettings {
   reminderEnabled: boolean;
   reminderTime: string;
   defaultClipDuration: number;
-  theme: 'light' | 'dark' | 'system';
+  theme: ThemeMode;
 }
 
 export default function SettingsScreen() {
@@ -26,7 +27,7 @@ export default function SettingsScreen() {
     reminderEnabled: true,
     reminderTime: '20:00',
     defaultClipDuration: 2,
-    theme: 'system'
+    theme: 'dark'  // Default to dark theme
   });
 
   const handleToggleSetting = async (key: keyof AppSettings, value: any) => {
@@ -54,21 +55,19 @@ export default function SettingsScreen() {
     title: string,
     description: string,
     icon: keyof typeof Ionicons.glyphMap,
-    onPress: () => void,
+    onPress?: () => void,
     rightElement?: React.ReactNode
   ) => (
     <MineCard onPress={onPress} style={styles.settingCard}>
       <View style={styles.settingContent}>
         <View style={styles.settingIcon}>
-          <Ionicons name={icon} size={24} color={Colors.sage} />
+          <Ionicons name={icon} size={20} color={Colors.surface} />
         </View>
         <View style={styles.settingInfo}>
           <Text style={styles.settingTitle}>{title}</Text>
           <Text style={styles.settingDescription}>{description}</Text>
         </View>
-        {rightElement || (
-          <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
-        )}
+        {rightElement}
       </View>
     </MineCard>
   );
@@ -113,12 +112,12 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Appearance</Text>
           
-          {renderSettingCard(
-            'Theme',
-            'System',
-            'color-palette',
-            () => Alert.alert('Coming Soon', 'Theme settings will be available soon')
-          )}
+          <MineCard style={styles.settingCard}>
+            <ThemeToggle
+              currentMode={settings.theme}
+              onModeChange={(mode) => handleToggleSetting('theme', mode)}
+            />
+          </MineCard>
         </View>
 
         {/* Storage */}
@@ -166,20 +165,19 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.offWhite,
+    backgroundColor: Colors.background,
   },
   
-  // Header
+  // Header - removed separator line
   header: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    // Removed border separator
   },
   headerTitle: {
     ...Typography.h1,
-    color: Colors.textPrimary,
+    color: Colors.background,  // Black text on white header
   },
   
   // Content
@@ -198,7 +196,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   
-  // Setting Cards
+  // Setting Cards - reduced padding
   settingCard: {
     marginBottom: Spacing.md,
   },
@@ -207,10 +205,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingIcon: {
-    width: 40,
-    height: 40,
+    width: 32,  // Reduced from 40
+    height: 32, // Reduced from 40
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.offWhite,
+    backgroundColor: Colors.background,  // Black icon background
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
@@ -220,36 +218,38 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     ...Typography.body,
-    color: Colors.textPrimary,
+    color: Colors.background,  // Black text on white surface
     fontWeight: '600',
     marginBottom: Spacing.xs,
   },
   settingDescription: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: Colors.background,  // Black text on white surface
+    opacity: 0.7,  // Slightly faded for hierarchy
   },
   
-  // Toggle
+  // Toggle - updated colors
   toggle: {
-    width: 50,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.disabled,
+    width: 44,  // Reduced from 50
+    height: 26, // Reduced from 30
+    borderRadius: 13,
+    backgroundColor: Colors.background,
     padding: 2,
     justifyContent: 'center',
+    opacity: 0.3,  // Disabled state
   },
   toggleEnabled: {
-    backgroundColor: Colors.sage,
+    backgroundColor: Colors.background,
+    opacity: 1,  // Enabled state
   },
   toggleThumb: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.white,
-    boxShadow: '0px 2px 2px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
+    width: 22, // Reduced from 26
+    height: 22, // Reduced from 26
+    borderRadius: 11,
+    backgroundColor: Colors.surface,
+    // Removed shadow
   },
   toggleThumbEnabled: {
-    transform: [{ translateX: 20 }],
+    transform: [{ translateX: 18 }], // Adjusted for smaller size
   },
 });

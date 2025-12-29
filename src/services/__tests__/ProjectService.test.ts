@@ -72,7 +72,7 @@ describe('ProjectService', () => {
       // Verify database insertion
       expect(mockDb.runAsync).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO projects'),
-        expect.arrayContaining([project.id, projectName, projectType])
+        expect.arrayContaining([project.id, projectName, null, projectType])
       );
 
       // Verify directory creation
@@ -93,7 +93,25 @@ describe('ProjectService', () => {
       // Verify database insertion with correct type
       expect(mockDb.runAsync).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO projects'),
-        expect.arrayContaining([project.id, projectName, 'freestyle'])
+        expect.arrayContaining([project.id, projectName, null, 'freestyle'])
+      );
+    });
+
+    it('should create a project with label when provided', async () => {
+      const projectName = 'My Labeled Project';
+      const projectLabel = 'Work Project';
+      const projectType: ProjectType = 'timeline';
+
+      const project = await projectService.createProject(projectType, projectName, projectLabel);
+
+      expect(project.name).toBe(projectName);
+      expect(project.label).toBe(projectLabel);
+      expect(project.type).toBe(projectType);
+
+      // Verify database insertion with label
+      expect(mockDb.runAsync).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO projects'),
+        expect.arrayContaining([project.id, projectName, projectLabel, projectType])
       );
     });
 
@@ -110,10 +128,9 @@ describe('ProjectService', () => {
     });
 
     it('should return mock project on web platform', async () => {
-      // Mock Platform.OS to be 'web'
-      jest.doMock('react-native', () => ({
-        Platform: { OS: 'web' },
-      }));
+      // Mock Platform.OS to be 'web' before calling the method
+      const originalPlatform = require('react-native').Platform.OS;
+      require('react-native').Platform.OS = 'web';
 
       const project = await projectService.createProject('timeline', 'Web Project');
 
@@ -123,6 +140,9 @@ describe('ProjectService', () => {
       
       // Should not call database operations on web
       expect(mockDb.runAsync).not.toHaveBeenCalled();
+
+      // Restore original platform
+      require('react-native').Platform.OS = originalPlatform;
     });
   });
 
@@ -132,6 +152,7 @@ describe('ProjectService', () => {
         {
           id: 'project-1',
           name: 'Recent Project',
+          label: 'Work',
           type: 'timeline',
           created_at: 1640995200000,
           updated_at: 1640995300000,
@@ -140,6 +161,7 @@ describe('ProjectService', () => {
         {
           id: 'project-2',
           name: 'Older Project',
+          label: null,
           type: 'freestyle',
           created_at: 1640995100000,
           updated_at: 1640995200000,
@@ -154,11 +176,13 @@ describe('ProjectService', () => {
 
       expect(projects).toHaveLength(2);
       expect(projects[0].name).toBe('Recent Project');
+      expect(projects[0].label).toBe('Work');
       expect(projects[0].type).toBe('timeline');
       expect(projects[0].createdAt).toEqual(new Date(1640995200000));
       expect(projects[0].settings.clipDuration).toBe(2);
       
       expect(projects[1].name).toBe('Older Project');
+      expect(projects[1].label).toBeUndefined();
       expect(projects[1].type).toBe('freestyle');
       expect(projects[1].thumbnailPath).toBe('/path/to/thumbnail.jpg');
       expect(projects[1].settings.clipDuration).toBe(3);
@@ -169,21 +193,24 @@ describe('ProjectService', () => {
     });
 
     it('should return empty array on web platform', async () => {
-      // Mock Platform.OS to be 'web'
-      jest.doMock('react-native', () => ({
-        Platform: { OS: 'web' },
-      }));
+      // Mock Platform.OS to be 'web' before calling the method
+      const originalPlatform = require('react-native').Platform.OS;
+      require('react-native').Platform.OS = 'web';
 
       const projects = await projectService.getProjects();
 
       expect(projects).toEqual([]);
       expect(mockDb.getAllAsync).not.toHaveBeenCalled();
+
+      // Restore original platform
+      require('react-native').Platform.OS = originalPlatform;
     });
 
     it('should get a specific project by id', async () => {
       const mockProject = {
         id: 'project-123',
         name: 'Test Project',
+        label: 'Personal',
         type: 'timeline',
         created_at: 1640995200000,
         updated_at: 1640995200000,
@@ -197,6 +224,7 @@ describe('ProjectService', () => {
       expect(project).not.toBeNull();
       expect(project!.id).toBe('project-123');
       expect(project!.name).toBe('Test Project');
+      expect(project!.label).toBe('Personal');
       expect(project!.type).toBe('timeline');
 
       expect(mockDb.getFirstAsync).toHaveBeenCalledWith(
@@ -219,6 +247,7 @@ describe('ProjectService', () => {
       const existingProject = {
         id: 'project-123',
         name: 'Original Name',
+        label: 'Old Label',
         type: 'timeline',
         created_at: 1640995200000,
         updated_at: 1640995200000,
@@ -263,6 +292,7 @@ describe('ProjectService', () => {
       const existingProject = {
         id: 'project-123',
         name: 'Original Name',
+        label: null,
         type: 'timeline',
         created_at: 1640995200000,
         updated_at: 1640995200000,
@@ -320,6 +350,7 @@ describe('ProjectService', () => {
       const mockProject = {
         id: 'project-123',
         name: 'Test Project',
+        label: null,
         type: 'timeline',
         created_at: 1640995200000,
         updated_at: 1640995200000,
@@ -341,6 +372,7 @@ describe('ProjectService', () => {
       const mockProject = {
         id: 'project-123',
         name: 'Test Project',
+        label: 'Custom Label',
         type: 'freestyle',
         created_at: 1640995200000,
         updated_at: 1640995200000,
@@ -383,6 +415,7 @@ describe('ProjectService', () => {
       const existingProject = {
         id: 'project-123',
         name: 'Test Project',
+        label: null,
         type: 'timeline',
         created_at: 1640995200000,
         updated_at: 1640995200000,

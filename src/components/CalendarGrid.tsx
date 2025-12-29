@@ -12,7 +12,6 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { Colors, Spacing, Typography, BorderRadius, Animation, TouchTargets } from '../design-system';
@@ -39,7 +38,7 @@ export function CalendarGrid({
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const screenWidth = Dimensions.get('window').width;
-  const cellSize = (screenWidth - (Spacing.lg * 2) - (Spacing.xs * 6)) / 7; // Account for padding and gaps
+  const cellSize = (screenWidth - (Spacing.md * 2) - (Spacing.xs * 6)) / 7; // Reduced padding for compact view
 
   useEffect(() => {
     // Reset animation when date changes
@@ -51,7 +50,6 @@ export function CalendarGrid({
     const month = date.getMonth();
     
     const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
     
@@ -140,7 +138,7 @@ export function CalendarGrid({
         style={styles.monthNavButton}
         disabled={isAnimating}
       >
-        <Ionicons name="chevron-back" size={24} color={Colors.sage} />
+        <Text style={styles.navArrow}>‹</Text>
       </TouchableOpacity>
       
       <Text style={styles.monthTitle}>
@@ -152,7 +150,7 @@ export function CalendarGrid({
         style={styles.monthNavButton}
         disabled={isAnimating}
       >
-        <Ionicons name="chevron-forward" size={24} color={Colors.sage} />
+        <Text style={styles.navArrow}>›</Text>
       </TouchableOpacity>
     </View>
   );
@@ -193,10 +191,7 @@ export function CalendarGrid({
                   thumbnailUri={snippet?.thumbnailPath}
                   isToday={isTodayDate}
                   onPress={handleCellPress}
-                  style={[
-                    styles.calendarCell,
-                    !isCurrentMonthDay && styles.otherMonthCell,
-                  ]}
+                  style={!isCurrentMonthDay ? styles.otherMonthCell : undefined}
                 />
               </View>
             );
@@ -206,58 +201,19 @@ export function CalendarGrid({
     );
   };
 
-  const renderProgressStats = () => {
-    const currentMonthDays = generateCalendarDays(currentDate)
-      .filter(date => isCurrentMonth(date));
-    
-    const filledDays = currentMonthDays.filter(date => {
-      const snippet = getSnippetForDate(date);
-      return !!snippet;
-    });
-
-    const progressPercentage = currentMonthDays.length > 0 
-      ? (filledDays.length / currentMonthDays.length) * 100 
-      : 0;
-
-    return (
-      <View style={styles.progressContainer}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.progressTitle}>Monthly Progress</Text>
-          <Text style={styles.progressStats}>
-            {filledDays.length} / {currentMonthDays.length} days
-          </Text>
-        </View>
-        
-        <View style={styles.progressBarContainer}>
-          <View style={styles.progressBarBackground}>
-            <Animated.View 
-              style={[
-                styles.progressBarFill,
-                { width: `${progressPercentage}%` }
-              ]} 
-            />
-          </View>
-          <Text style={styles.progressPercentage}>
-            {Math.round(progressPercentage)}%
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
   return (
     <View style={[styles.container, style]}>
       {renderCalendarHeader()}
       {renderWeekDaysHeader()}
       {renderCalendarGrid()}
-      {renderProgressStats()}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.white,
+    backgroundColor: 'transparent',
+    flex: 1,
   },
   
   // Calendar Header
@@ -265,29 +221,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   monthNavButton: {
-    width: TouchTargets.minimum,
-    height: TouchTargets.minimum,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: BorderRadius.md,
   },
+  navArrow: {
+    fontSize: 24,
+    color: Colors.black,
+    fontFamily: 'Inter-Bold',
+    fontWeight: 'bold',
+  },
   monthTitle: {
-    ...Typography.h2,
-    color: Colors.textPrimary,
-    fontWeight: '600',
+    ...Typography.h3,
+    color: Colors.black,
+    fontWeight: 'bold',
+    fontFamily: 'Inter-Bold',
   },
   
   // Week Days Header
   weekDaysRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   weekDayContainer: {
     alignItems: 'center',
@@ -295,14 +258,16 @@ const styles = StyleSheet.create({
   },
   weekDayText: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: Colors.black,
     fontWeight: '600',
     textAlign: 'center',
+    fontFamily: 'Inter-Regular',
   },
   
   // Calendar Grid
   calendarGridContainer: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    flex: 1,
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -314,61 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  calendarCell: {
-    width: '90%', // Slightly smaller than container for spacing
-    height: '90%',
-  },
   otherMonthCell: {
     opacity: 0.3,
-  },
-  
-  // Progress Stats
-  progressContainer: {
-    backgroundColor: Colors.offWhite,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  progressTitle: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  progressStats: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  progressBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  progressBarBackground: {
-    flex: 1,
-    height: 8,
-    backgroundColor: Colors.border,
-    borderRadius: BorderRadius.xs,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: Colors.sage,
-    borderRadius: BorderRadius.xs,
-  },
-  progressPercentage: {
-    ...Typography.body,
-    color: Colors.sage,
-    fontWeight: '600',
-    minWidth: 40,
-    textAlign: 'right',
   },
 });

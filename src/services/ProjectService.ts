@@ -15,7 +15,7 @@ export class ProjectService {
     return ProjectService.instance;
   }
 
-  public async createProject(type: ProjectType, name: string): Promise<Project> {
+  public async createProject(type: ProjectType, name: string, label?: string): Promise<Project> {
     if (Platform.OS === 'web') {
       // Return mock project for web platform
       const id = this.generateId();
@@ -30,6 +30,7 @@ export class ProjectService {
       return {
         id,
         name,
+        label,
         type,
         createdAt: new Date(now),
         updatedAt: new Date(now),
@@ -50,6 +51,7 @@ export class ProjectService {
     const project: Project = {
       id,
       name,
+      label,
       type,
       createdAt: new Date(now),
       updatedAt: new Date(now),
@@ -62,9 +64,9 @@ export class ProjectService {
 
       // Insert into database
       await db.runAsync(
-        `INSERT INTO projects (id, name, type, created_at, updated_at, settings) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, name, type, now, now, JSON.stringify(defaultSettings)]
+        `INSERT INTO projects (id, name, label, type, created_at, updated_at, settings) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, name, label || null, type, now, now, JSON.stringify(defaultSettings)]
       );
 
       return project;
@@ -131,12 +133,14 @@ export class ProjectService {
       await db.runAsync(
         `UPDATE projects SET 
          name = ?, 
+         label = ?,
          thumbnail_path = ?, 
          settings = ?, 
          updated_at = ? 
          WHERE id = ?`,
         [
           updatedProject.name,
+          updatedProject.label || null,
           updatedProject.thumbnailPath || null,
           JSON.stringify(updatedProject.settings),
           now,
@@ -170,6 +174,7 @@ export class ProjectService {
     return {
       id: row.id,
       name: row.name,
+      label: row.label || undefined,
       type: row.type as ProjectType,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
