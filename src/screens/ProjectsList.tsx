@@ -1,3 +1,8 @@
+/**
+ * ProjectsList - Main projects screen with sage FAB and white card layouts
+ * Implements Requirements 1.1
+ */
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -8,17 +13,20 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 
-import { Colors, Spacing, Typography, TouchTargets, ZIndex } from '@/src/design-system';
-import { MineButton, MineCard } from '@/src/components';
-import { ProjectService } from '@/src/services/ProjectService';
-import { Project } from '@/src/types';
-import { useAppStore } from '@/src/store';
+import { ProjectsStackParamList } from '../navigation/types';
+import { Colors, Spacing, Typography, TouchTargets, ZIndex } from '../design-system';
+import { MineButton, MineCard } from '../components';
+import { ProjectService } from '../services/ProjectService';
+import { Project } from '../types';
+import { useAppStore } from '../store';
 
-export default function ProjectsScreen() {
+type Props = StackScreenProps<ProjectsStackParamList, 'ProjectsList'>;
+
+export function ProjectsList({ navigation }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,12 +65,12 @@ export default function ProjectsScreen() {
 
   const handleCreateProject = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/create-project');
+    navigation.navigate('CreateProject');
   };
 
   const handleProjectPress = async (project: Project) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(`/project/${project.id}`);
+    navigation.navigate('ProjectDetail', { projectId: project.id });
   };
 
   const formatDate = (date: Date): string => {
