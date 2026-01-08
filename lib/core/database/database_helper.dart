@@ -47,7 +47,16 @@ class DatabaseHelper {
       
       // For mobile platforms (iOS/Android), use the default sqflite
       final databasesPath = await getDatabasesPath();
+      
+      // CRITICAL FIX: Ensure the database directory exists
+      final databaseDir = Directory(databasesPath);
+      if (!await databaseDir.exists()) {
+        await databaseDir.create(recursive: true);
+        debugPrint('Created database directory: $databasesPath');
+      }
+      
       final path = join(databasesPath, AppConstants.databaseName);
+      debugPrint('Database path: $path');
 
       return await openDatabase(
         path,
@@ -60,6 +69,7 @@ class DatabaseHelper {
       );
     } catch (e) {
       debugPrint('Database initialization error: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
       rethrow;
     }
   }

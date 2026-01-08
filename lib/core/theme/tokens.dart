@@ -96,9 +96,7 @@ class AppTokens {
         secondary: primary600,
         secondaryContainer: primary800,
         surface: Colors.black, // System black for background
-        onSurface: Colors.white, // White text on dark background
-        background: Colors.black, // System black background
-        onBackground: Colors.white, // White text on black background
+        onSurface: Colors.white, // White text on black background
         error: error,
       );
     } else {
@@ -108,9 +106,7 @@ class AppTokens {
         secondary: primary600,
         secondaryContainer: primary500,
         surface: Colors.white, // System white for background
-        onSurface: Colors.black, // Dark text on light background
-        background: Colors.white, // System white background
-        onBackground: Colors.black, // Dark text on white background
+        onSurface: Colors.black, // Dark text on white background
         error: error,
       );
     }

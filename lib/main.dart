@@ -22,19 +22,25 @@ Future<void> main() async {
     cameras = [];
   }
 
-  // Initialize database with better error handling
+  // CRITICAL FIX: Initialize database BEFORE running the app
   try {
     final dbHelper = DatabaseHelper();
-    await dbHelper.database;
+    final db = await dbHelper.database;
     debugPrint('Database initialized successfully');
+    
+    // Verify database is working
+    final isHealthy = await dbHelper.isDatabaseHealthy();
+    debugPrint('Database health check: ${isHealthy ? "PASSED" : "FAILED"}');
     
     // Run debug test in debug mode
     if (kDebugMode) {
       await DebugHelper.testDatabaseConnection();
     }
-  } catch (e) {
-    debugPrint('Error initializing database: $e');
-    // Don't rethrow - let the app continue and handle database errors gracefully
+  } catch (e, stackTrace) {
+    debugPrint('CRITICAL: Database initialization failed: $e');
+    debugPrint('Stack trace: $stackTrace');
+    // Don't continue if database fails - this prevents the "create project" error
+    rethrow;
   }
   
   runApp(const MineApp());
