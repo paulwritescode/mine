@@ -27,8 +27,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
-          if (settingsProvider.isLoading || settingsProvider.settings == null) {
+          if (settingsProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (settingsProvider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    settingsProvider.error!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      settingsProvider.loadSettings();
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
           }
 
           final settings = settingsProvider.settings!;

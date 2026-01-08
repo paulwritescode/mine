@@ -14,10 +14,9 @@ dependencies:
   provider: ^6.1.2
   go_router: ^17.0.1
   
-  # Database & Persistence - Cross Platform
+  # Database & Persistence - Cross-platform
   sqflite: ^2.4.1
   sqflite_common_ffi: ^2.3.4
-  sqflite_common_ffi_web: ^1.1.1
   path: ^1.9.1
   path_provider: ^2.1.5
   
@@ -29,7 +28,7 @@ dependencies:
   
   # Media Export & Sharing - Updated for compatibility
   share_plus: ^12.0.1
-  # gallery_saver: ^2.3.2  # Temporarily removed due to Android namespace issues
+  gal: ^2.3.0  # Modern gallery saving package
   ffmpeg_kit_flutter_new: ^4.1.0
   
   # Utilities

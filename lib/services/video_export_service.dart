@@ -3,6 +3,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
+import 'package:gal/gal.dart';
 import '../core/models/snippet.dart';
 
 class VideoExportService {
@@ -177,6 +178,43 @@ class VideoExportService {
       return 0;
     } catch (e) {
       return 0;
+    }
+  }
+
+  /// Save exported video to device gallery
+  Future<bool> saveToGallery(String filePath) async {
+    try {
+      // Check if file exists
+      final file = File(filePath);
+      if (!await file.exists()) {
+        throw Exception('Video file not found');
+      }
+
+      // Save to gallery using gal package
+      await Gal.putVideo(filePath);
+      return true;
+    } on GalException catch (e) {
+      throw Exception('Failed to save to gallery: ${e.type.message}');
+    } catch (e) {
+      throw Exception('Failed to save to gallery: $e');
+    }
+  }
+
+  /// Check if gallery save permission is available
+  Future<bool> hasGalleryPermission() async {
+    try {
+      return await Gal.hasAccess();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Request gallery save permission
+  Future<bool> requestGalleryPermission() async {
+    try {
+      return await Gal.requestAccess();
+    } catch (e) {
+      return false;
     }
   }
 

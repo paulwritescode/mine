@@ -132,7 +132,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         },
       ),
       // Floating action button for recording
-      floatingActionButton: _selectedDay != null && _isToday(_selectedDay!)
+      floatingActionButton: _selectedDay != null && _canRecordVideo(_selectedDay!)
           ? FloatingActionButton(
               onPressed: () => _navigateToCamera(),
               backgroundColor: Colors.black,
@@ -257,8 +257,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         snippets: daySnippets,
         isToday: isToday,
         onVideoTap: (snippet) => _playVideo(snippet),
-        onEditTap: isToday ? (snippet) => _editSnippet(snippet) : null,
-        onDeleteTap: isToday ? (snippet) => _deleteSnippet(snippet) : null,
+        onEditTap: _canRecordVideo(_selectedDay!) ? (snippet) => _editSnippet(snippet) : null,
+        onDeleteTap: _canRecordVideo(_selectedDay!) ? (snippet) => _deleteSnippet(snippet) : null,
       );
     }
 
@@ -391,7 +391,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'You can only record videos for today and past dates',
+            'You can only record videos for today and yesterday',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -425,6 +425,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   bool _isToday(DateTime day) {
     final now = DateTime.now();
     return day.year == now.year && day.month == now.month && day.day == now.day;
+  }
+
+  bool _isYesterday(DateTime day) {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return day.year == yesterday.year && day.month == yesterday.month && day.day == yesterday.day;
+  }
+
+  bool _canRecordVideo(DateTime day) {
+    return _isToday(day) || _isYesterday(day);
   }
 
   void _navigateToCamera() {

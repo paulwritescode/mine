@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../../screens/splash/splash_screen.dart';
 import '../../screens/main_tab_view.dart';
 import '../../screens/projects/create_project_screen.dart';
 import '../../screens/projects/project_detail_screen.dart';
@@ -11,8 +12,14 @@ import '../../screens/export/export_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     routes: [
+      // Splash screen
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      
       // Main tab navigation
       GoRoute(
         path: '/',

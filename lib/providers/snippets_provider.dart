@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import '../core/storage/storage_service.dart';
+import '../core/database/database_helper.dart';
 import '../core/models/snippet.dart';
 
 class SnippetsProvider with ChangeNotifier {
-  final StorageService _storageService = StorageService();
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
   final Map<String, List<Snippet>> _snippetsByProject = {};
   bool _isLoading = false;
 
@@ -18,7 +18,7 @@ class SnippetsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final snippets = await _storageService.getSnippetsForProject(projectId);
+      final snippets = await _databaseHelper.getSnippetsForProject(projectId);
       _snippetsByProject[projectId] = snippets;
     } catch (e) {
       debugPrint('Error loading snippets: $e');
@@ -30,7 +30,7 @@ class SnippetsProvider with ChangeNotifier {
 
   Future<void> addSnippet(Snippet snippet) async {
     try {
-      await _storageService.insertSnippet(snippet);
+      await _databaseHelper.insertSnippet(snippet);
       
       if (_snippetsByProject[snippet.projectId] == null) {
         _snippetsByProject[snippet.projectId] = [];
@@ -46,7 +46,7 @@ class SnippetsProvider with ChangeNotifier {
 
   Future<void> updateSnippet(Snippet snippet) async {
     try {
-      await _storageService.updateSnippet(snippet);
+      await _databaseHelper.updateSnippet(snippet);
       
       final projectSnippets = _snippetsByProject[snippet.projectId];
       if (projectSnippets != null) {
@@ -64,7 +64,7 @@ class SnippetsProvider with ChangeNotifier {
 
   Future<void> deleteSnippet(String snippetId, String projectId) async {
     try {
-      await _storageService.deleteSnippet(snippetId, projectId);
+      await _databaseHelper.deleteSnippet(snippetId);
       
       final projectSnippets = _snippetsByProject[projectId];
       if (projectSnippets != null) {

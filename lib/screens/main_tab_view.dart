@@ -56,8 +56,10 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -70,14 +72,17 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
   }
 
   Widget _buildFloatingTabBar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       height: 80 + MediaQuery.of(context).padding.bottom,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         // Removed curved borders for full width appearance
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: theme.shadowColor.withValues(alpha: isDark ? 0.3 : 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -103,6 +108,7 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
 
   Widget _buildTabItem(int index, TabItem tab) {
     final isActive = _currentIndex == index;
+    final theme = Theme.of(context);
     
     return GestureDetector(
       onTap: () => _onTabTapped(index),
@@ -119,7 +125,9 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
                 child: Icon(
                   isActive ? tab.activeIcon : tab.icon,
                   key: ValueKey(isActive),
-                  color: isActive ? Colors.black : Colors.grey[400],
+                  color: isActive 
+                      ? theme.colorScheme.primary 
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   size: 24,
                 ),
               ),
@@ -129,7 +137,9 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: isActive ? Colors.black : Colors.grey[400],
+                  color: isActive 
+                      ? theme.colorScheme.primary 
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -140,6 +150,8 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
   }
 
   Widget _buildCaptureButton() {
+    final theme = Theme.of(context);
+    
     return GestureDetector(
       onTapDown: (_) {
         _captureButtonController.forward();
@@ -162,19 +174,19 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: theme.colorScheme.primary,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.add,
-                color: Colors.white,
+                color: theme.colorScheme.onPrimary,
                 size: 28,
               ),
             ),

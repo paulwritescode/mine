@@ -1,23 +1,34 @@
 import 'package:flutter/foundation.dart';
-import '../core/storage/storage_service.dart';
+import '../core/database/database_helper.dart';
 import '../core/models/app_settings.dart';
 
 class SettingsProvider with ChangeNotifier {
-  final StorageService _storageService = StorageService();
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
   AppSettings? _settings;
   bool _isLoading = false;
+  String? _error;
 
   AppSettings? get settings => _settings;
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   Future<void> loadSettings() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
-      _settings = await _storageService.getSettings();
+      _settings = await _databaseHelper.getSettings();
     } catch (e) {
       debugPrint('Error loading settings: $e');
+      _error = 'Failed to load settings. Please restart the app.';
+      // Provide fallback default settings to prevent infinite loading
+      _settings = const AppSettings(
+        defaultVideoDuration: 2,
+        reminderTime: '20:00',
+        notificationsEnabled: true,
+        isDarkTheme: false,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -29,7 +40,7 @@ class SettingsProvider with ChangeNotifier {
 
     try {
       final updatedSettings = _settings!.copyWith(defaultVideoDuration: duration);
-      await _storageService.updateSettings(updatedSettings);
+      await _databaseHelper.updateSettings(updatedSettings);
       _settings = updatedSettings;
       notifyListeners();
     } catch (e) {
@@ -43,7 +54,7 @@ class SettingsProvider with ChangeNotifier {
 
     try {
       final updatedSettings = _settings!.copyWith(reminderTime: time);
-      await _storageService.updateSettings(updatedSettings);
+      await _databaseHelper.updateSettings(updatedSettings);
       _settings = updatedSettings;
       notifyListeners();
     } catch (e) {
@@ -57,7 +68,7 @@ class SettingsProvider with ChangeNotifier {
 
     try {
       final updatedSettings = _settings!.copyWith(notificationsEnabled: enabled);
-      await _storageService.updateSettings(updatedSettings);
+      await _databaseHelper.updateSettings(updatedSettings);
       _settings = updatedSettings;
       notifyListeners();
     } catch (e) {
@@ -71,7 +82,7 @@ class SettingsProvider with ChangeNotifier {
 
     try {
       final updatedSettings = _settings!.copyWith(isDarkTheme: isDark);
-      await _storageService.updateSettings(updatedSettings);
+      await _databaseHelper.updateSettings(updatedSettings);
       _settings = updatedSettings;
       notifyListeners();
     } catch (e) {

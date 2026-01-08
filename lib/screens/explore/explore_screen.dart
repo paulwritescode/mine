@@ -22,12 +22,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Explore'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: theme.colorScheme.onSurface,
       ),
       body: Consumer<ProjectsProvider>(
         builder: (context, projectsProvider, child) {
@@ -45,20 +47,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   Icon(
                     Icons.explore_outlined,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Nothing to explore yet',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.grey[600],
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Create your first project to start exploring',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[500],
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -67,8 +69,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     icon: const Icon(Icons.add),
                     label: const Text('Create Project'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ],
@@ -84,12 +86,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Discover',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w300,
-                        color: Colors.black,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -97,7 +99,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       'Browse through all your video projects',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[600],
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],

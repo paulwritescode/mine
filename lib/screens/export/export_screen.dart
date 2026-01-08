@@ -104,10 +104,24 @@ class _ExportScreenState extends State<ExportScreen> {
     if (_exportedVideoPath == null) return;
 
     try {
-      await Share.shareXFiles(
-        [XFile(_exportedVideoPath!)],
-        text: 'Exported video from ${_project?.name ?? 'project'}',
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(_exportedVideoPath!)],
+          text: 'Exported video from ${_project?.name ?? 'project'}',
+        ),
       );
+
+      // Optional: Handle the share result
+      if (result.status == ShareResultStatus.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Video shared successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -117,20 +131,194 @@ class _ExportScreenState extends State<ExportScreen> {
     }
   }
 
+  Future<void> _saveToGallery() async {
+    if (_exportedVideoPath == null) return;
+
+    try {
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Text('Saving to gallery...'),
+              ],
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
+      final success = await _exportService.saveToGallery(_exportedVideoPath!);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success 
+              ? 'Video saved to gallery successfully!' 
+              : 'Failed to save to gallery'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save to gallery: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showExportOptions() {
+    if (_exportedVideoPath == null) return;
+
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Export Options',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildOptionTile(
+              icon: Icons.save_alt,
+              title: 'Save to Gallery',
+              subtitle: 'Save video to device gallery',
+              onTap: () {
+                Navigator.pop(context);
+                _saveToGallery();
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildOptionTile(
+              icon: Icons.share,
+              title: 'Share Video',
+              subtitle: 'Share via other apps',
+              onTap: () {
+                Navigator.pop(context);
+                _shareExportedVideo();
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: theme.colorScheme.primary, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: Icon(Icons.close, color: theme.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Export ${_project?.name ?? 'Project'}',
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: theme.colorScheme.onSurface),
         ),
       ),
       body: Padding(
@@ -150,10 +338,12 @@ class _ExportScreenState extends State<ExportScreen> {
   }
 
   Widget _buildProjectInfo() {
+    final theme = Theme.of(context);
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -161,8 +351,8 @@ class _ExportScreenState extends State<ExportScreen> {
         children: [
           Text(
             _project?.name ?? 'Unknown Project',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -170,8 +360,8 @@ class _ExportScreenState extends State<ExportScreen> {
           const SizedBox(height: 8),
           Text(
             '${_snippets.length} videos • ${_getTotalDuration()} total duration',
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 14,
             ),
           ),
@@ -179,8 +369,8 @@ class _ExportScreenState extends State<ExportScreen> {
             const SizedBox(height: 4),
             Text(
               'Created ${DateFormat('MMM d, yyyy').format(_project!.createdAt.toLocal())}',
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 12,
               ),
             ),
@@ -191,20 +381,22 @@ class _ExportScreenState extends State<ExportScreen> {
   }
 
   Widget _buildVideosList() {
+    final theme = Theme.of(context);
+    
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[900],
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Videos to Export',
               style: TextStyle(
-                color: Colors.white,
+                color: theme.colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -212,10 +404,10 @@ class _ExportScreenState extends State<ExportScreen> {
             const SizedBox(height: 12),
             Expanded(
               child: _snippets.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'No videos in this project',
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
                       ),
                     )
                   : ListView.builder(
@@ -233,11 +425,13 @@ class _ExportScreenState extends State<ExportScreen> {
   }
 
   Widget _buildVideoItem(Snippet snippet, int index) {
+    final theme = Theme.of(context);
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[800],
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -246,14 +440,14 @@ class _ExportScreenState extends State<ExportScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue,
+              color: theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
               child: Text(
                 '$index',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -266,8 +460,8 @@ class _ExportScreenState extends State<ExportScreen> {
               children: [
                 Text(
                   DateFormat('MMM d, h:mm a').format(snippet.recordedAt.toLocal()),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -275,8 +469,8 @@ class _ExportScreenState extends State<ExportScreen> {
                   const SizedBox(height: 2),
                   Text(
                     snippet.note!,
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                     maxLines: 1,
@@ -288,8 +482,8 @@ class _ExportScreenState extends State<ExportScreen> {
           ),
           Text(
             '${snippet.duration}s',
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 12,
             ),
           ),
@@ -299,19 +493,21 @@ class _ExportScreenState extends State<ExportScreen> {
   }
 
   Widget _buildExportSection() {
+    final theme = Theme.of(context);
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Export Options',
             style: TextStyle(
-              color: Colors.white,
+              color: theme.colorScheme.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -320,14 +516,14 @@ class _ExportScreenState extends State<ExportScreen> {
           if (_isExporting) ...[
             LinearProgressIndicator(
               value: _exportProgress,
-              backgroundColor: Colors.grey[700],
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
             const SizedBox(height: 8),
             Text(
               _exportStatus,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 12,
               ),
             ),
@@ -339,20 +535,20 @@ class _ExportScreenState extends State<ExportScreen> {
                 child: ElevatedButton(
                   onPressed: _isExporting || _snippets.isEmpty ? null : _exportProject,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: _isExporting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                           ),
                         )
                       : const Text('Export Project'),
@@ -361,20 +557,53 @@ class _ExportScreenState extends State<ExportScreen> {
               if (_exportedVideoPath != null) ...[
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: _shareExportedVideo,
+                  onPressed: _showExportOptions,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Icon(Icons.share),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.file_download, size: 18),
+                      SizedBox(width: 4),
+                      Text('Save & Share'),
+                    ],
+                  ),
                 ),
               ],
             ],
           ),
+          if (_exportedVideoPath != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Export completed! Tap "Save & Share" to save to gallery or share.',
+                      style: TextStyle(
+                        color: Colors.green[300],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

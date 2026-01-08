@@ -1,12 +1,11 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:path/path.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show Platform;
+import 'dart:io';
 import '../constants/app_constants.dart';
 import '../models/project.dart';
 import '../models/snippet.dart';
 import '../models/app_settings.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -16,30 +15,53 @@ class DatabaseHelper {
   static Database? _database;
 
   Future<Database> get database async {
-    _database ??= await _initDatabase();
-    return _database!;
+    try {
+      _database ??= await _initDatabase();
+      return _database!;
+    } catch (e) {
+      debugPrint('Database access error: $e');
+      rethrow;
+    }
+  }
+
+  // Health check method to verify database is working
+  Future<bool> isDatabaseHealthy() async {
+    try {
+      final db = await database;
+      // Simple query to test database connectivity
+      await db.rawQuery('SELECT 1');
+      return true;
+    } catch (e) {
+      debugPrint('Database health check failed: $e');
+      return false;
+    }
   }
 
   Future<Database> _initDatabase() async {
-    // Initialize the appropriate database factory based on platform
-    if (kIsWeb) {
-      // Web platform
-      databaseFactory = databaseFactoryFfiWeb;
-    } else if (Platform.isWindows || Platform.isLinux) {
-      // Desktop platforms
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
+    try {
+      // Initialize sqflite for desktop platforms
+      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        sqfliteFfiInit();
+        databaseFactory = databaseFactoryFfi;
+      }
+      
+      // For mobile platforms (iOS/Android), use the default sqflite
+      final databasesPath = await getDatabasesPath();
+      final path = join(databasesPath, AppConstants.databaseName);
+
+      return await openDatabase(
+        path,
+        version: AppConstants.databaseVersion,
+        onCreate: _onCreate,
+        onOpen: (db) async {
+          // Ensure foreign key constraints are enabled
+          await db.execute('PRAGMA foreign_keys = ON');
+        },
+      );
+    } catch (e) {
+      debugPrint('Database initialization error: $e');
+      rethrow;
     }
-    // For mobile (iOS/Android), use the default sqflite
-
-    final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, AppConstants.databaseName);
-
-    return await openDatabase(
-      path,
-      version: AppConstants.databaseVersion,
-      onCreate: _onCreate,
-    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -162,27 +184,56 @@ class DatabaseHelper {
 
   // Settings operations
   Future<AppSettings> getSettings() async {
-    final db = await database;
-    final maps = await db.query('settings', where: 'id = ?', whereArgs: [1]);
-    if (maps.isNotEmpty) {
-      return AppSettings.fromMap(maps.first);
+    try {
+      final db = await database;
+      final maps = await db.query('settings', where: 'id = ?', whereArgs: [1]);
+      if (maps.isNotEmpty) {
+        return AppSettings.fromMap(maps.first);
+      }
+      // If no settings found, insert default settings and return them
+      final defaultSettings = const AppSettings(
+        defaultVideoDuration: AppConstants.defaultVideoDuration,
+        reminderTime: AppConstants.defaultReminderTime,
+        notificationsEnabled: AppConstants.defaultNotificationsEnabled,
+        isDarkTheme: false,
+      );
+      await updateSettings(defaultSettings);
+      return defaultSettings;
+    } catch (e) {
+      debugPrint('Error getting settings: $e');
+      // Return default settings as fallback
+      return const AppSettings(
+        defaultVideoDuration: AppConstants.defaultVideoDuration,
+        reminderTime: AppConstants.defaultReminderTime,
+        notificationsEnabled: AppConstants.defaultNotificationsEnabled,
+        isDarkTheme: false,
+      );
     }
-    // Return default settings if none found
-    return const AppSettings(
-      defaultVideoDuration: AppConstants.defaultVideoDuration,
-      reminderTime: AppConstants.defaultReminderTime,
-      notificationsEnabled: AppConstants.defaultNotificationsEnabled,
-      isDarkTheme: false,
-    );
   }
 
   Future<void> updateSettings(AppSettings settings) async {
-    final db = await database;
-    await db.update(
-      'settings',
-      settings.toMap(),
-      where: 'id = ?',
-      whereArgs: [1],
-    );
+    try {
+      final db = await database;
+      final existingSettings = await db.query('settings', where: 'id = ?', whereArgs: [1]);
+      
+      if (existingSettings.isEmpty) {
+        // Insert new settings record
+        await db.insert('settings', {
+          'id': 1,
+          ...settings.toMap(),
+        });
+      } else {
+        // Update existing settings
+        await db.update(
+          'settings',
+          settings.toMap(),
+          where: 'id = ?',
+          whereArgs: [1],
+        );
+      }
+    } catch (e) {
+      debugPrint('Error updating settings: $e');
+      rethrow;
+    }
   }
 }
