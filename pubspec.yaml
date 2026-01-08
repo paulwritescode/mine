@@ -1,0 +1,55 @@
+name: mine
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management & Navigation
+  provider: ^6.1.2
+  go_router: ^17.0.1
+  
+  # Database & Persistence - Cross Platform
+  sqflite: ^2.4.1
+  sqflite_common_ffi: ^2.3.4
+  sqflite_common_ffi_web: ^1.1.1
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  
+  # Camera & Media
+  camera: ^0.11.3
+  video_player: ^2.10.1
+  video_compress: ^3.1.3
+  video_thumbnail: ^0.5.3
+  
+  # Media Export & Sharing - Updated for compatibility
+  share_plus: ^12.0.1
+  # gallery_saver: ^2.3.2  # Temporarily removed due to Android namespace issues
+  ffmpeg_kit_flutter_new: ^4.1.0
+  
+  # Utilities
+  uuid: ^4.5.1
+  intl: ^0.20.2
+  permission_handler: ^12.0.1
+  
+  # Optional UI Utilities
+  flutter_staggered_grid_view: ^0.7.0
+  
+  # Calendar & Date Utilities
+  table_calendar: ^3.2.0
+  
+  # Additional UI Components
+  flutter_animate: ^4.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
