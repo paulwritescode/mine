@@ -25,22 +25,37 @@ Future<void> main() async {
   // CRITICAL FIX: Initialize database BEFORE running the app
   try {
     final dbHelper = DatabaseHelper();
-    final db = await dbHelper.database;
-    debugPrint('Database initialized successfully');
     
-    // Verify database is working
-    final isHealthy = await dbHelper.isDatabaseHealthy();
-    debugPrint('Database health check: ${isHealthy ? "PASSED" : "FAILED"}');
+    // For web, skip database initialization but still test health
+    if (kIsWeb) {
+      debugPrint('Web platform detected - using mock database');
+      final isHealthy = await dbHelper.isDatabaseHealthy();
+      debugPrint('Database health check: ${isHealthy ? "PASSED" : "FAILED (expected on web)"}');
+    } else {
+      // Only initialize actual database on non-web platforms
+      await dbHelper.database;
+      debugPrint('Database initialized successfully');
+      
+      // Verify database is working
+      final isHealthy = await dbHelper.isDatabaseHealthy();
+      debugPrint('Database health check: ${isHealthy ? "PASSED" : "FAILED"}');
+    }
     
     // Run debug test in debug mode
-    if (kDebugMode) {
+    if (kDebugMode && !kIsWeb) {
       await DebugHelper.testDatabaseConnection();
     }
   } catch (e, stackTrace) {
     debugPrint('CRITICAL: Database initialization failed: $e');
     debugPrint('Stack trace: $stackTrace');
-    // Don't continue if database fails - this prevents the "create project" error
-    rethrow;
+    
+    // For web, continue anyway since we're using mock data
+    if (kIsWeb) {
+      debugPrint('Continuing with mock data for web platform');
+    } else {
+      // Don't continue if database fails on non-web platforms
+      rethrow;
+    }
   }
   
   runApp(const MineApp());
@@ -55,10 +70,26 @@ class MineApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ProjectsProvider()),
         ChangeNotifierProvider(create: (_) => SnippetsProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(
+          create: (_) => SettingsProvider()..loadSettings(),
+        ),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
+          // Show loading screen while settings are loading
+          if (settingsProvider.isLoading) {
+            return MaterialApp(
+              title: 'Mine',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              home: const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            );
+          }
+
           return MaterialApp.router(
             title: 'Mine',
             debugShowCheckedModeBanner: false,

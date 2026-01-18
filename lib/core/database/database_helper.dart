@@ -1,4 +1,5 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:io';
 import '../constants/app_constants.dart';
@@ -16,6 +17,10 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     try {
+      // For web, skip database initialization temporarily
+      if (kIsWeb) {
+        throw UnsupportedError('Database not supported on web - using mock data');
+      }
       _database ??= await _initDatabase();
       return _database!;
     } catch (e) {
@@ -27,6 +32,10 @@ class DatabaseHelper {
   // Health check method to verify database is working
   Future<bool> isDatabaseHealthy() async {
     try {
+      // For web, always return false (database disabled)
+      if (kIsWeb) {
+        return false;
+      }
       final db = await database;
       // Simple query to test database connectivity
       await db.rawQuery('SELECT 1');
@@ -39,8 +48,31 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     try {
-      // Initialize sqflite for desktop platforms
-      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      // For web, we need to initialize the database factory first
+      if (kIsWeb) {
+        // Initialize FFI for web (this is required for web support)
+        sqfliteFfiInit();
+        databaseFactory = databaseFactoryFfi;
+        
+        // Use in-memory database for web
+        final db = await openDatabase(
+          ':memory:',
+          version: AppConstants.databaseVersion,
+          onCreate: _onCreate,
+        );
+        debugPrint('Web in-memory database initialized');
+        return db;
+      }
+      
+      // Initialize sqflite for desktop platforms (non-web)
+      // Only check Platform when not on web
+      try {
+        if (!Platform.isAndroid && !Platform.isIOS) {
+          sqfliteFfiInit();
+          databaseFactory = databaseFactoryFfi;
+        }
+      } catch (e) {
+        // If Platform check fails, assume we need FFI
         sqfliteFfiInit();
         databaseFactory = databaseFactoryFfi;
       }
@@ -124,18 +156,54 @@ class DatabaseHelper {
 
   // Project operations
   Future<String> insertProject(Project project) async {
+    // For web, return mock success
+    if (kIsWeb) {
+      debugPrint('Mock: Project inserted - ${project.name}');
+      return project.id;
+    }
     final db = await database;
     await db.insert('projects', project.toMap());
     return project.id;
   }
 
   Future<List<Project>> getAllProjects() async {
+    // For web, return mock projects
+    if (kIsWeb) {
+      debugPrint('Mock: Returning sample projects');
+      return [
+        Project(
+          id: 'mock-1',
+          name: 'Sample Project 1',
+          type: ProjectType.timeline,
+          createdAt: DateTime.now().subtract(const Duration(days: 7)),
+          updatedAt: DateTime.now().subtract(const Duration(days: 1)),
+        ),
+        Project(
+          id: 'mock-2',
+          name: 'Sample Project 2',
+          type: ProjectType.freestyle,
+          createdAt: DateTime.now().subtract(const Duration(days: 3)),
+          updatedAt: DateTime.now(),
+        ),
+      ];
+    }
     final db = await database;
     final maps = await db.query('projects', orderBy: 'updated_at DESC');
     return maps.map((map) => Project.fromMap(map)).toList();
   }
 
   Future<Project?> getProject(String id) async {
+    // For web, return mock project
+    if (kIsWeb) {
+      debugPrint('Mock: Getting project $id');
+      return Project(
+        id: id,
+        name: 'Mock Project',
+        type: ProjectType.timeline,
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+        updatedAt: DateTime.now(),
+      );
+    }
     final db = await database;
     final maps = await db.query('projects', where: 'id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) {
@@ -145,6 +213,11 @@ class DatabaseHelper {
   }
 
   Future<void> updateProject(Project project) async {
+    // For web, mock success
+    if (kIsWeb) {
+      debugPrint('Mock: Project updated - ${project.name}');
+      return;
+    }
     final db = await database;
     await db.update(
       'projects',
@@ -155,18 +228,44 @@ class DatabaseHelper {
   }
 
   Future<void> deleteProject(String id) async {
+    // For web, mock success
+    if (kIsWeb) {
+      debugPrint('Mock: Project deleted - $id');
+      return;
+    }
     final db = await database;
     await db.delete('projects', where: 'id = ?', whereArgs: [id]);
   }
 
   // Snippet operations
   Future<String> insertSnippet(Snippet snippet) async {
+    // For web, mock success
+    if (kIsWeb) {
+      debugPrint('Mock: Snippet inserted');
+      return snippet.id;
+    }
     final db = await database;
     await db.insert('snippets', snippet.toMap());
     return snippet.id;
   }
 
   Future<List<Snippet>> getSnippetsForProject(String projectId) async {
+    // For web, return mock snippets
+    if (kIsWeb) {
+      debugPrint('Mock: Returning sample snippets for project $projectId');
+      return [
+        Snippet(
+          id: 'mock-snippet-1',
+          projectId: projectId,
+          videoPath: '/mock/path/video1.mp4',
+          thumbnailPath: '/mock/path/thumb1.jpg',
+          recordedAt: DateTime.now().subtract(const Duration(hours: 2)),
+          duration: 30,
+          note: 'Sample video snippet',
+          location: 'Mock Location',
+        ),
+      ];
+    }
     final db = await database;
     final maps = await db.query(
       'snippets',
@@ -178,6 +277,11 @@ class DatabaseHelper {
   }
 
   Future<void> updateSnippet(Snippet snippet) async {
+    // For web, mock success
+    if (kIsWeb) {
+      debugPrint('Mock: Snippet updated');
+      return;
+    }
     final db = await database;
     await db.update(
       'snippets',
@@ -188,6 +292,11 @@ class DatabaseHelper {
   }
 
   Future<void> deleteSnippet(String id) async {
+    // For web, mock success
+    if (kIsWeb) {
+      debugPrint('Mock: Snippet deleted - $id');
+      return;
+    }
     final db = await database;
     await db.delete('snippets', where: 'id = ?', whereArgs: [id]);
   }
@@ -195,6 +304,17 @@ class DatabaseHelper {
   // Settings operations
   Future<AppSettings> getSettings() async {
     try {
+      // For web, return default settings
+      if (kIsWeb) {
+        debugPrint('Mock: Returning default settings');
+        return const AppSettings(
+          defaultVideoDuration: AppConstants.defaultVideoDuration,
+          reminderTime: AppConstants.defaultReminderTime,
+          notificationsEnabled: AppConstants.defaultNotificationsEnabled,
+          isDarkTheme: false,
+        );
+      }
+      
       final db = await database;
       final maps = await db.query('settings', where: 'id = ?', whereArgs: [1]);
       if (maps.isNotEmpty) {
@@ -223,6 +343,12 @@ class DatabaseHelper {
 
   Future<void> updateSettings(AppSettings settings) async {
     try {
+      // For web, mock success
+      if (kIsWeb) {
+        debugPrint('Mock: Settings updated');
+        return;
+      }
+      
       final db = await database;
       final existingSettings = await db.query('settings', where: 'id = ?', whereArgs: [1]);
       
