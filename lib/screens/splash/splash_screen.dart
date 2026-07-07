@@ -66,19 +66,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTokens.primary700,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTokens.primary700,
-              AppTokens.primary800,
-              AppTokens.primary900,
-            ],
-          ),
-        ),
+      backgroundColor: AppTokens.inkStrong,
+      body: SizedBox.expand(
         child: Center(
           child: AnimatedBuilder(
             animation: _animationController,
@@ -95,20 +84,14 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: AppTokens.primary400,
-                          borderRadius: BorderRadius.circular(AppTokens.radiusXLarge),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: AppTokens.elevationHigh,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          color: AppTokens.brandCoral,
+                          borderRadius:
+                              BorderRadius.circular(AppTokens.radiusHero),
                         ),
                         child: const Icon(
                           Icons.video_library_rounded,
                           size: 60,
-                          color: AppTokens.primary800,
+                          color: AppTokens.onDark,
                         ),
                       ),
                       
@@ -117,23 +100,18 @@ class _SplashScreenState extends State<SplashScreen>
                       // App Name
                       Text(
                         'Mine',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: AppTokens.textOnDark,
-                          letterSpacing: 1.2,
+                        style: AppTokens.headingLg.copyWith(
+                          color: AppTokens.onDark,
                         ),
                       ),
-                      
-                      const SizedBox(height: AppTokens.spacing8),
-                      
+
+                      const SizedBox(height: AppTokens.spaceXs),
+
                       // Tagline
                       Text(
                         'Capture Your Story',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppTokens.primary400,
-                          letterSpacing: 0.5,
+                        style: AppTokens.subtitle.copyWith(
+                          color: AppTokens.muted,
                         ),
                       ),
                       
@@ -143,10 +121,10 @@ class _SplashScreenState extends State<SplashScreen>
                       SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(
+                        child: const CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTokens.primary400,
+                            AppTokens.brandCoral,
                           ),
                         ),
                       ),

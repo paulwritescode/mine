@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:io';
+import '../../core/theme/tokens.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final String snippetId;
@@ -98,7 +99,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTokens.inkStrong,
       body: GestureDetector(
         onTap: _toggleControls,
         child: Stack(
@@ -124,27 +125,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             const Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.white,
+              color: AppTokens.onDark,
             ),
-            const SizedBox(height: 16),
-            const Text(
+            const SizedBox(height: AppTokens.spaceMd),
+            Text(
               'Error Loading Video',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+              style: AppTokens.headingSm.copyWith(color: AppTokens.onDark),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTokens.spaceXs),
             Text(
               _errorMessage!,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.white70,
+              style: AppTokens.bodyMd.copyWith(
+                color: AppTokens.onDark.withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTokens.spaceXl),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Go Back'),
@@ -160,14 +156,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              color: Colors.white,
+              color: AppTokens.brandCoral,
             ),
-            SizedBox(height: 16),
+            SizedBox(height: AppTokens.spaceMd),
             Text(
               'Loading Video...',
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.white,
+                color: AppTokens.onDark,
               ),
             ),
           ],
@@ -187,13 +183,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         children: [
           // Top bar
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTokens.spaceMd),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.7),
+                  AppTokens.inkStrong.withValues(alpha: 0.7),
                   Colors.transparent,
                 ],
               ),
@@ -201,17 +197,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back, color: AppTokens.onDark),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Video Player',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTokens.cardTitle.copyWith(color: AppTokens.onDark),
                   ),
                 ),
               ],
@@ -221,13 +213,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           // Bottom controls
           if (_isInitialized && _controller != null)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTokens.spaceMd),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.7),
+                    AppTokens.inkStrong.withValues(alpha: 0.7),
                     Colors.transparent,
                   ],
                 ),
@@ -238,13 +230,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   VideoProgressIndicator(
                     _controller!,
                     allowScrubbing: true,
-                    colors: const VideoProgressColors(
-                      playedColor: Colors.white,
-                      bufferedColor: Colors.white30,
-                      backgroundColor: Colors.white10,
+                    colors: VideoProgressColors(
+                      playedColor: AppTokens.brandCoral,
+                      bufferedColor: AppTokens.onDark.withValues(alpha: 0.3),
+                      backgroundColor: AppTokens.onDark.withValues(alpha: 0.1),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTokens.spaceMd),
                   // Play/pause button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -252,7 +244,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       IconButton(
                         icon: Icon(
                           _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
+                          color: AppTokens.onDark,
                           size: 32,
                         ),
                         onPressed: _togglePlayPause,

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/projects_provider.dart';
 import '../../providers/snippets_provider.dart';
 import '../../core/models/snippet.dart';
+import '../../core/theme/tokens.dart';
 import '../../widgets/date_video_display.dart';
 import '../../widgets/video_grid.dart';
 import '../../widgets/dual_calendar_view.dart';
@@ -36,12 +37,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTokens.canvas,
       body: Consumer2<ProjectsProvider, SnippetsProvider>(
         builder: (context, projectsProvider, snippetsProvider, child) {
           final project = projectsProvider.getProjectById(widget.projectId);
-          final snippets = snippetsProvider.getSnippetsForProject(widget.projectId);
-          
+          final snippets =
+              snippetsProvider.getSnippetsForProject(widget.projectId);
+
           if (project == null) {
             return const Center(child: Text('Project not found'));
           }
@@ -50,43 +52,34 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             children: [
               // Header
               Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
+                decoration: const BoxDecoration(color: AppTokens.canvas),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppTokens.spaceMd),
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.black),
+                          icon: const Icon(Icons.arrow_back,
+                              color: AppTokens.ink),
                           onPressed: () => context.pop(),
                         ),
                         Expanded(
                           child: Text(
                             project.name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
+                            style: AppTokens.cardTitle,
                             textAlign: TextAlign.center,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.file_download, color: Colors.black),
-                          onPressed: () => context.push('/export/${widget.projectId}'),
+                          icon: const Icon(Icons.file_download_outlined,
+                              color: AppTokens.ink),
+                          onPressed: () =>
+                              context.push('/export/${widget.projectId}'),
                           tooltip: 'Export Project',
                         ),
                         IconButton(
-                          icon: const Icon(Icons.more_vert, color: Colors.black),
+                          icon: const Icon(Icons.more_horiz,
+                              color: AppTokens.ink),
                           onPressed: () => _showProjectMenu(context, project),
                         ),
                       ],
@@ -94,10 +87,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ),
                 ),
               ),
-              
+
               // Calendar Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceMd),
                 child: DualCalendarView(
                   snippets: snippets,
                   selectedDay: _selectedDay,
@@ -113,15 +106,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   },
                 ),
               ),
-              
+
               // Legend
               _buildLegend(),
-              
+
               // Content area
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppTokens.spaceMd),
                   child: _selectedDay != null
                       ? _buildDateContent(snippets)
                       : _buildOverviewContent(snippets),
@@ -131,41 +124,31 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           );
         },
       ),
-      // Floating action button for recording
-      floatingActionButton: _selectedDay != null && _canRecordVideo(_selectedDay!)
-          ? FloatingActionButton(
-              onPressed: () => _navigateToCamera(),
-              backgroundColor: Colors.black,
-              child: const Icon(Icons.videocam, color: Colors.white),
-            )
-          : null,
+      // Floating action button for recording (Brand Coral via theme).
+      floatingActionButton:
+          _selectedDay != null && _canRecordVideo(_selectedDay!)
+              ? FloatingActionButton(
+                  onPressed: () => _navigateToCamera(),
+                  child: const Icon(Icons.videocam),
+                )
+              : null,
     );
   }
 
   Widget _buildLegend() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMd),
+      padding: const EdgeInsets.all(AppTokens.spaceSm),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        color: AppTokens.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusLg),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildLegendItem(
-            color: const Color(0xFF2196F3),
-            label: 'Today',
-          ),
-          _buildLegendItem(
-            color: const Color(0xFF4CAF50),
-            label: 'Has Video',
-          ),
-          _buildLegendItem(
-            color: const Color(0xFFE0E0E0),
-            label: 'No Video',
-          ),
+          _buildLegendItem(color: AppTokens.ink, label: 'Today'),
+          _buildLegendItem(color: AppTokens.brandCoral, label: 'Has Video'),
+          _buildLegendItem(color: AppTokens.hairline, label: 'No Video'),
         ],
       ),
     );
@@ -186,9 +169,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[700],
+          style: AppTokens.micro.copyWith(
+            color: AppTokens.slate,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -201,7 +183,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
     final daySnippets = _getSnippetsForDay(_selectedDay!, snippets);
     final isToday = _isToday(_selectedDay!);
-    final isPast = _selectedDay!.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+    final isPast =
+        _selectedDay!.isBefore(DateTime.now().subtract(const Duration(days: 1)));
     final isFuture = _selectedDay!.isAfter(DateTime.now());
 
     return Column(
@@ -211,34 +194,32 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              DateFormat('EEEE, MMMM d').format(_selectedDay!.toLocal()),
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+            Expanded(
+              child: Text(
+                DateFormat('EEEE, MMMM d').format(_selectedDay!.toLocal()),
+                style: AppTokens.headingSm,
               ),
             ),
             if (isToday)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppTokens.spaceSm, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2196F3),
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppTokens.ink,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusFull),
                 ),
-                child: const Text(
+                child: Text(
                   'Today',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+                  style: AppTokens.micro.copyWith(
+                    color: AppTokens.onDark,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
           ],
         ),
-        const SizedBox(height: 24),
-        
+        const SizedBox(height: AppTokens.spaceXl),
+
         // Content based on day type and video availability
         Expanded(
           child: _buildDayContent(daySnippets, isToday, isPast, isFuture),
@@ -247,7 +228,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
-  Widget _buildDayContent(List<Snippet> daySnippets, bool isToday, bool isPast, bool isFuture) {
+  Widget _buildDayContent(
+      List<Snippet> daySnippets, bool isToday, bool isPast, bool isFuture) {
     if (isFuture) {
       return _buildFutureDayContent();
     }
@@ -257,8 +239,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         snippets: daySnippets,
         isToday: isToday,
         onVideoTap: (snippet) => _playVideo(snippet),
-        onEditTap: _canRecordVideo(_selectedDay!) ? (snippet) => _editSnippet(snippet) : null,
-        onDeleteTap: _canRecordVideo(_selectedDay!) ? (snippet) => _deleteSnippet(snippet) : null,
+        onEditTap: _canRecordVideo(_selectedDay!)
+            ? (snippet) => _editSnippet(snippet)
+            : null,
+        onDeleteTap: _canRecordVideo(_selectedDay!)
+            ? (snippet) => _deleteSnippet(snippet)
+            : null,
       );
     }
 
@@ -269,7 +255,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     return _buildPastEmptyState();
   }
 
-  Widget _buildTodayEmptyState() {
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String message,
+    Widget? action,
+  }) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -277,129 +268,55 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
+            decoration: const BoxDecoration(
+              color: AppTokens.surface,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.videocam_outlined,
-              size: 40,
-              color: Colors.grey,
-            ),
+            child: Icon(icon, size: 40, color: AppTokens.steel),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'No video for today',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTokens.spaceXl),
+          Text(title, style: AppTokens.headingSm),
+          const SizedBox(height: AppTokens.spaceXs),
           Text(
-            'Tap the camera button to record your first video',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            message,
+            style: AppTokens.bodyMd.copyWith(color: AppTokens.slate),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: _navigateToCamera,
-            icon: const Icon(Icons.videocam),
-            label: const Text('Record Video'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
+          if (action != null) ...[
+            const SizedBox(height: AppTokens.spaceXxl),
+            action,
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildTodayEmptyState() {
+    return _buildEmptyState(
+      icon: Icons.videocam_outlined,
+      title: 'No video for today',
+      message: 'Tap the camera button to record your first video',
+      action: FilledButton.icon(
+        onPressed: _navigateToCamera,
+        icon: const Icon(Icons.videocam, size: 18),
+        label: const Text('Record Video'),
       ),
     );
   }
 
   Widget _buildPastEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.video_library_outlined,
-              size: 40,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'No video recorded',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'You didn\'t record a video on this day',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return _buildEmptyState(
+      icon: Icons.video_library_outlined,
+      title: 'No video recorded',
+      message: 'You didn\'t record a video on this day',
     );
   }
 
   Widget _buildFutureDayContent() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.schedule,
-              size: 40,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Future date',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'You can only record videos for today and yesterday',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return _buildEmptyState(
+      icon: Icons.schedule,
+      title: 'Future date',
+      message: 'You can only record videos for today and yesterday',
     );
   }
 
@@ -424,12 +341,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
   bool _isToday(DateTime day) {
     final now = DateTime.now();
-    return day.year == now.year && day.month == now.month && day.day == now.day;
+    return day.year == now.year &&
+        day.month == now.month &&
+        day.day == now.day;
   }
 
   bool _isYesterday(DateTime day) {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    return day.year == yesterday.year && day.month == yesterday.month && day.day == yesterday.day;
+    return day.year == yesterday.year &&
+        day.month == yesterday.month &&
+        day.day == yesterday.day;
   }
 
   bool _canRecordVideo(DateTime day) {
@@ -437,7 +358,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   void _navigateToCamera() {
-    final dateString = DateFormat('yyyy-MM-dd').format(_selectedDay ?? DateTime.now());
+    final dateString =
+        DateFormat('yyyy-MM-dd').format(_selectedDay ?? DateTime.now());
     context.push('/camera/${widget.projectId}?date=$dateString');
   }
 
@@ -461,7 +383,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Delete Video'),
-          content: const Text('Are you sure you want to delete this video? This action cannot be undone.'),
+          content: const Text(
+              'Are you sure you want to delete this video? This action cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -470,12 +393,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                context.read<SnippetsProvider>().deleteSnippet(snippet.id, widget.projectId);
+                context
+                    .read<SnippetsProvider>()
+                    .deleteSnippet(snippet.id, widget.projectId);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Video deleted')),
                 );
               },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: AppTokens.error),
               child: const Text('Delete'),
             ),
           ],
@@ -493,7 +418,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.edit),
+                leading: const Icon(Icons.edit_outlined),
                 title: const Text('Edit Project'),
                 onTap: () {
                   Navigator.pop(context);
@@ -501,7 +426,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.file_download),
+                leading: const Icon(Icons.file_download_outlined),
                 title: const Text('Export Project'),
                 onTap: () {
                   Navigator.pop(context);
@@ -509,8 +434,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Delete Project', style: TextStyle(color: Colors.red)),
+                leading:
+                    const Icon(Icons.delete_outline, color: AppTokens.error),
+                title: const Text('Delete Project',
+                    style: TextStyle(color: AppTokens.error)),
                 onTap: () {
                   Navigator.pop(context);
                   // TODO: Implement project deletion

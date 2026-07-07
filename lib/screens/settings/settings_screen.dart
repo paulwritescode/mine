@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/tokens.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -36,19 +37,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.error_outline,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: AppTokens.stone,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTokens.spaceMd),
                   Text(
                     settingsProvider.error!,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: AppTokens.bodyMd.copyWith(color: AppTokens.slate),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -161,10 +159,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.w600,
+            title.toUpperCase(),
+            style: AppTokens.captionBold.copyWith(
+              color: AppTokens.steel,
+              letterSpacing: 0.5,
             ),
           ),
         ),

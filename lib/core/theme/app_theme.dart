@@ -1,185 +1,253 @@
 import 'package:flutter/material.dart';
 import 'tokens.dart';
 
+/// Builds the app's light and dark themes from [AppTokens].
+///
+/// Design intent (MiniMax language): a minimal, border-light system —
+/// flat white cards, black pill CTAs, borderless filled inputs, DM Sans
+/// everywhere, and Brand Coral reserved as the single signature accent.
 class AppTheme {
-  // Private constructor to prevent instantiation
   AppTheme._();
 
-  /// Creates the light theme for the app
-  static ThemeData get lightTheme {
-    final colorScheme = AppTokens.createColorScheme(isDark: false);
-    
+  static ThemeData get lightTheme => _build(isDark: false);
+  static ThemeData get darkTheme => _build(isDark: true);
+
+  static ThemeData _build({required bool isDark}) {
+    final colorScheme = AppTokens.createColorScheme(isDark: isDark);
+    final onBg = colorScheme.onSurface;
+
+    // Pill button label — recolored per surface at call sites where needed.
+    ButtonStyle pill({
+      required Color background,
+      required Color foreground,
+      BorderSide? side,
+    }) {
+      return ButtonStyle(
+        backgroundColor: WidgetStatePropertyAll(background),
+        foregroundColor: WidgetStatePropertyAll(foreground),
+        elevation: const WidgetStatePropertyAll(0),
+        shadowColor: const WidgetStatePropertyAll(Colors.transparent),
+        overlayColor:
+            WidgetStatePropertyAll(foreground.withValues(alpha: 0.08)),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(
+            horizontal: AppTokens.spaceXl,
+            vertical: AppTokens.spaceSm,
+          ),
+        ),
+        textStyle: WidgetStatePropertyAll(AppTokens.buttonMd),
+        side: side == null ? null : WidgetStatePropertyAll(side),
+        shape: const WidgetStatePropertyAll(
+          StadiumBorder(),
+        ),
+        minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+      );
+    }
+
     return ThemeData(
-      colorScheme: colorScheme,
       useMaterial3: true,
-      
-      // App Bar Theme
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: colorScheme.surface,
+      textTheme: _textTheme(isDark: isDark),
+      // Coral is the accent that "wins" on selection controls.
+      splashColor: AppTokens.brandCoral.withValues(alpha: 0.10),
+      highlightColor: AppTokens.brandCoral.withValues(alpha: 0.06),
+      dividerTheme: DividerThemeData(
+        color: isDark ? colorScheme.outlineVariant : AppTokens.hairlineSoft,
+        thickness: 1,
+        space: 1,
+      ),
+
+      // -- App bar: flat, borderless, editorial ------------------------------
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        foregroundColor: onBg,
         elevation: 0,
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: AppTokens.cardTitle.copyWith(color: onBg),
       ),
-      
-      // Card Theme - Uses primaryContainer (primary400 in light mode)
+
+      // -- Cards: flat white, generous radius, NO default border -------------
       cardTheme: CardThemeData(
-        elevation: AppTokens.elevationLow,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        color: colorScheme.surface == AppTokens.canvas
+            ? AppTokens.canvas
+            : colorScheme.surfaceContainerHighest,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusLarge),
+          borderRadius: BorderRadius.circular(AppTokens.radiusXl),
         ),
-        color: colorScheme.primaryContainer,
+        clipBehavior: Clip.antiAlias,
       ),
-      
-      // Elevated Button Theme
+
+      // -- Buttons: pill-shaped everywhere -----------------------------------
+      // Primary: black fill, white label — the dominant CTA.
+      filledButtonTheme: FilledButtonThemeData(
+        style: pill(
+          background: colorScheme.primary,
+          foreground: colorScheme.onPrimary,
+        ),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-          elevation: AppTokens.elevationLow,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppTokens.spacing24,
-            vertical: AppTokens.spacing12,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          ),
+        style: pill(
+          background: colorScheme.primary,
+          foreground: colorScheme.onPrimary,
         ),
       ),
-      
-      // Floating Action Button Theme
+      // Secondary: outlined pill.
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: pill(
+          background: Colors.transparent,
+          foreground: onBg,
+          side: BorderSide(color: onBg),
+        ),
+      ),
+      // Tertiary / inline text pill.
+      textButtonTheme: TextButtonThemeData(
+        style: pill(
+          background: Colors.transparent,
+          foreground: onBg,
+        ),
+      ),
+
+      // -- FAB: the one Brand Coral signature moment -------------------------
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: AppTokens.elevationMedium,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusLarge),
-        ),
+        backgroundColor: AppTokens.brandCoral,
+        foregroundColor: AppTokens.onDark,
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
+        shape: const StadiumBorder(),
+        extendedTextStyle: AppTokens.buttonMd,
       ),
-      
-      // Input Decoration Theme
+
+      // -- Inputs: borderless filled pill-soft fields ------------------------
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surface,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest
+            : AppTokens.surface,
+        hintStyle: AppTokens.bodySm.copyWith(color: AppTokens.stone),
+        labelStyle: AppTokens.bodySm.copyWith(color: AppTokens.slate),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.spaceMd,
+          vertical: AppTokens.spaceSm,
+        ),
+        // No border at rest — the fill alone defines the field.
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          borderSide: BorderSide(color: colorScheme.outline),
+          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          borderSide: BorderSide(color: colorScheme.outline),
+          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderSide: const BorderSide(
+            color: AppTokens.brandBlueDeep,
+            width: 2,
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppTokens.spacing16,
-          vertical: AppTokens.spacing12,
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderSide: const BorderSide(color: AppTokens.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderSide: const BorderSide(color: AppTokens.error, width: 2),
         ),
       ),
-      
-      // Bottom Navigation Bar Theme
+
+      // -- Chips: pill tabs / tags -------------------------------------------
+      chipTheme: ChipThemeData(
+        backgroundColor: AppTokens.surface,
+        selectedColor: colorScheme.primary,
+        secondarySelectedColor: colorScheme.primary,
+        labelStyle: AppTokens.bodySmMedium.copyWith(color: onBg),
+        secondaryLabelStyle:
+            AppTokens.bodySmMedium.copyWith(color: colorScheme.onPrimary),
+        side: BorderSide.none,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.spaceMd,
+          vertical: AppTokens.spaceXs,
+        ),
+      ),
+
+      // -- Bottom navigation: flat, borderless -------------------------------
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: colorScheme.surface,
-        selectedItemColor: colorScheme.primary,
-        unselectedItemColor: colorScheme.onSurface.withValues(alpha: 0.6),
+        selectedItemColor: onBg,
+        unselectedItemColor: AppTokens.steel,
+        selectedLabelStyle: AppTokens.micro.copyWith(color: onBg),
+        unselectedLabelStyle: AppTokens.micro,
         type: BottomNavigationBarType.fixed,
-        elevation: AppTokens.elevationMedium,
+        elevation: 0,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: AppTokens.brandCoral.withValues(alpha: 0.14),
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        labelTextStyle: WidgetStatePropertyAll(AppTokens.micro),
+      ),
+
+      // -- Misc --------------------------------------------------------------
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppTokens.canvas,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppTokens.radiusXxl),
+          ),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: isDark ? colorScheme.surface : AppTokens.canvas,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTokens.radiusXl),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppTokens.ink,
+        contentTextStyle: AppTokens.bodySm.copyWith(color: AppTokens.onDark),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+        ),
       ),
     );
   }
 
-  /// Creates the dark theme for the app
-  static ThemeData get darkTheme {
-    final colorScheme = AppTokens.createColorScheme(isDark: true);
-    
-    return ThemeData(
-      colorScheme: colorScheme,
-      useMaterial3: true,
-      
-      // App Bar Theme
-      appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
-      ),
-      
-      // Card Theme - Uses primaryContainer (primary900 in dark mode)
-      cardTheme: CardThemeData(
-        elevation: AppTokens.elevationLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusLarge),
-        ),
-        color: colorScheme.primaryContainer,
-      ),
-      
-      // Elevated Button Theme
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-          elevation: AppTokens.elevationLow,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppTokens.spacing24,
-            vertical: AppTokens.spacing12,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          ),
-        ),
-      ),
-      
-      // Floating Action Button Theme
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: AppTokens.elevationMedium,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusLarge),
-        ),
-      ),
-      
-      // Input Decoration Theme
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          borderSide: BorderSide(color: colorScheme.outline),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          borderSide: BorderSide(color: colorScheme.outline),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppTokens.spacing16,
-          vertical: AppTokens.spacing12,
-        ),
-      ),
-      
-      // Bottom Navigation Bar Theme
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: colorScheme.surface,
-        selectedItemColor: colorScheme.primary,
-        unselectedItemColor: colorScheme.onSurface.withValues(alpha: 0.6),
-        type: BottomNavigationBarType.fixed,
-        elevation: AppTokens.elevationMedium,
-      ),
+  static TextTheme _textTheme({required bool isDark}) {
+    final base = TextTheme(
+      displayLarge: AppTokens.heroDisplay,
+      displayMedium: AppTokens.displayLg,
+      displaySmall: AppTokens.headingLg,
+      headlineLarge: AppTokens.headingMd,
+      headlineMedium: AppTokens.headingSm,
+      headlineSmall: AppTokens.cardTitle,
+      titleLarge: AppTokens.cardTitle,
+      titleMedium: AppTokens.bodyMdBold.copyWith(color: AppTokens.ink),
+      titleSmall: AppTokens.bodySmMedium,
+      bodyLarge: AppTokens.bodyMd,
+      bodyMedium: AppTokens.bodySm,
+      bodySmall: AppTokens.caption,
+      labelLarge: AppTokens.buttonMd.copyWith(color: AppTokens.ink),
+      labelMedium: AppTokens.captionBold,
+      labelSmall: AppTokens.micro,
+    );
+    if (!isDark) return base;
+    // Flip ink-toned styles to light for dark surfaces.
+    return base.apply(
+      bodyColor: AppTokens.onDark,
+      displayColor: AppTokens.onDark,
     );
   }
 }

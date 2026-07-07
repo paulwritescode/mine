@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../core/models/snippet.dart';
+import '../core/theme/tokens.dart';
 
 enum CalendarViewType { week, month }
 
@@ -24,16 +25,20 @@ class DualCalendarView extends StatefulWidget {
   State<DualCalendarView> createState() => _DualCalendarViewState();
 }
 
-class _DualCalendarViewState extends State<DualCalendarView> with TickerProviderStateMixin {
+class _DualCalendarViewState extends State<DualCalendarView>
+    with TickerProviderStateMixin {
   CalendarViewType _viewType = CalendarViewType.week;
   late DateTime _focusedDay;
   late AnimationController _switchController;
   late AnimationController _fadeController;
 
-  // Color definitions
-  static const Color todayColor = Color(0xFF2196F3); // Blue for today
-  static const Color hasVideoColor = Color(0xFF4CAF50); // Green for days with videos
-  static const Color noVideoColor = Color(0xFFE0E0E0); // Light grey for past days without videos
+  // Day-state encoding (MiniMax language):
+  //  • today / selected → black (the brand's selection state)
+  //  • past day with video → Brand Coral (the signature "captured" accent)
+  //  • past day without video → quiet surface grey
+  static const Color selectedColor = AppTokens.ink;
+  static const Color hasVideoColor = AppTokens.brandCoral;
+  static const Color noVideoColor = AppTokens.surface;
 
   @override
   void initState() {
@@ -62,7 +67,7 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
     return Column(
       children: [
         _buildCalendarHeader(),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTokens.spaceMd),
         _buildCalendarContent(),
       ],
     );
@@ -70,7 +75,7 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
 
   Widget _buildCalendarHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMd),
       child: Row(
         children: [
           // Month/Year display
@@ -80,19 +85,12 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
               children: [
                 Text(
                   DateFormat('MMMM yyyy').format(_focusedDay),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
+                  style: AppTokens.headingSm,
                 ),
                 if (widget.selectedDay != null)
                   Text(
                     DateFormat('EEEE, d').format(widget.selectedDay!),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: AppTokens.bodySm.copyWith(color: AppTokens.slate),
                   ),
               ],
             ),
@@ -107,38 +105,33 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
   Widget _buildViewToggle() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        color: AppTokens.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusFull),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          _buildToggleButton(CalendarViewType.week, Icons.view_week, 'Week'),
           _buildToggleButton(
-            CalendarViewType.week,
-            Icons.view_week,
-            'Week',
-          ),
-          _buildToggleButton(
-            CalendarViewType.month,
-            Icons.calendar_month,
-            'Month',
-          ),
+              CalendarViewType.month, Icons.calendar_month, 'Month'),
         ],
       ),
     );
   }
 
-  Widget _buildToggleButton(CalendarViewType type, IconData icon, String label) {
+  Widget _buildToggleButton(
+      CalendarViewType type, IconData icon, String label) {
     final isSelected = _viewType == type;
-    
+
     return GestureDetector(
       onTap: () => _switchView(type),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.spaceSm, vertical: AppTokens.spaceXs),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          color: isSelected ? AppTokens.ink : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppTokens.radiusFull),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -146,15 +139,14 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
             Icon(
               icon,
               size: 16,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? AppTokens.onDark : AppTokens.slate,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppTokens.spaceXxs),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTokens.micro.copyWith(
                 fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : Colors.grey[600],
+                color: isSelected ? AppTokens.onDark : AppTokens.slate,
               ),
             ),
           ],
@@ -182,8 +174,9 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
 
   Widget _buildCustomWeekCalendar() {
     // Calculate the start of the week for the focused day
-    final focusedWeekStart = _focusedDay.subtract(Duration(days: _focusedDay.weekday - 1));
-    
+    final focusedWeekStart =
+        _focusedDay.subtract(Duration(days: _focusedDay.weekday - 1));
+
     return Column(
       children: [
         // Navigation row
@@ -191,7 +184,7 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: const Icon(Icons.chevron_left, color: Colors.black),
+              icon: const Icon(Icons.chevron_left, color: AppTokens.ink),
               onPressed: () {
                 setState(() {
                   _focusedDay = _focusedDay.subtract(const Duration(days: 7));
@@ -201,14 +194,13 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
             ),
             Text(
               DateFormat('MMMM yyyy').format(_focusedDay),
-              style: const TextStyle(
-                fontSize: 16,
+              style: AppTokens.bodyMd.copyWith(
+                color: AppTokens.ink,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.chevron_right, color: Colors.black),
+              icon: const Icon(Icons.chevron_right, color: AppTokens.ink),
               onPressed: () {
                 setState(() {
                   _focusedDay = _focusedDay.add(const Duration(days: 7));
@@ -218,14 +210,15 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTokens.spaceXs),
         // Week dates
         Row(
           children: List.generate(7, (index) {
             final day = focusedWeekStart.add(Duration(days: index));
             return Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: AppTokens.spaceXxs),
                 child: _buildWeekDayCell(day),
               ),
             );
@@ -237,25 +230,26 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
 
   Widget _buildWeekDayCell(DateTime day) {
     final isToday = _isToday(day);
-    final isSelected = widget.selectedDay != null && _isSameDay(widget.selectedDay!, day);
+    final isSelected =
+        widget.selectedDay != null && _isSameDay(widget.selectedDay!, day);
     final hasVideo = _getSnippetsForDay(day).isNotEmpty;
     final isPast = day.isBefore(DateTime.now().subtract(const Duration(days: 1)));
-    
+
     Color backgroundColor;
     Color textColor;
-    
+
     if (isSelected || isToday) {
-      backgroundColor = todayColor;
-      textColor = Colors.white;
+      backgroundColor = selectedColor;
+      textColor = AppTokens.onDark;
     } else if (isPast && hasVideo) {
       backgroundColor = hasVideoColor;
-      textColor = Colors.white;
+      textColor = AppTokens.onDark;
     } else if (isPast && !hasVideo) {
       backgroundColor = noVideoColor;
-      textColor = Colors.black87;
+      textColor = AppTokens.slate;
     } else {
-      backgroundColor = Colors.grey[100]!;
-      textColor = Colors.black87;
+      backgroundColor = AppTokens.surfaceSoft;
+      textColor = AppTokens.charcoal;
     }
 
     return GestureDetector(
@@ -269,26 +263,21 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
         height: 70,
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppTokens.radiusLg),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               '${day.day}',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
+              style: AppTokens.cardTitle.copyWith(color: textColor),
             ),
             const SizedBox(height: 2),
             Text(
               DateFormat('EEE').format(day),
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTokens.micro.copyWith(
                 fontWeight: FontWeight.w500,
-                color: textColor.withOpacity(0.8),
+                color: textColor.withValues(alpha: 0.8),
               ),
             ),
           ],
@@ -320,18 +309,18 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
           });
           widget.onPageChanged(focusedDay);
         },
-        calendarStyle: CalendarStyle(
+        calendarStyle: const CalendarStyle(
           outsideDaysVisible: false,
           // Remove default decorations since we're using custom builders
-          todayDecoration: const BoxDecoration(color: Colors.transparent),
-          selectedDecoration: const BoxDecoration(color: Colors.transparent),
-          defaultDecoration: const BoxDecoration(color: Colors.transparent),
-          weekendDecoration: const BoxDecoration(color: Colors.transparent),
+          todayDecoration: BoxDecoration(color: Colors.transparent),
+          selectedDecoration: BoxDecoration(color: Colors.transparent),
+          defaultDecoration: BoxDecoration(color: Colors.transparent),
+          weekendDecoration: BoxDecoration(color: Colors.transparent),
           // Text styles
-          todayTextStyle: const TextStyle(color: Colors.transparent),
-          selectedTextStyle: const TextStyle(color: Colors.transparent),
-          defaultTextStyle: const TextStyle(color: Colors.transparent),
-          weekendTextStyle: const TextStyle(color: Colors.transparent),
+          todayTextStyle: TextStyle(color: Colors.transparent),
+          selectedTextStyle: TextStyle(color: Colors.transparent),
+          defaultTextStyle: TextStyle(color: Colors.transparent),
+          weekendTextStyle: TextStyle(color: Colors.transparent),
           // Marker styling
           markersMaxCount: 0,
           canMarkersOverflow: false,
@@ -350,58 +339,59 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
             return _buildDayCell(day, false, false, isOutside: true);
           },
         ),
-        headerStyle: const HeaderStyle(
+        headerStyle: HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
-          titleTextStyle: TextStyle(
-            fontSize: 18,
+          titleTextStyle: AppTokens.subtitle.copyWith(
+            color: AppTokens.ink,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
           ),
-          leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
-          rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
+          leftChevronIcon:
+              const Icon(Icons.chevron_left, color: AppTokens.ink),
+          rightChevronIcon:
+              const Icon(Icons.chevron_right, color: AppTokens.ink),
         ),
       ),
     );
   }
 
-  Widget _buildDayCell(DateTime day, bool isToday, bool isSelected, {bool isOutside = false}) {
+  Widget _buildDayCell(DateTime day, bool isToday, bool isSelected,
+      {bool isOutside = false}) {
     final hasVideo = _getSnippetsForDay(day).isNotEmpty;
     final isPast = day.isBefore(DateTime.now().subtract(const Duration(days: 1)));
-    
+
     Color backgroundColor;
     Color textColor;
 
     if (isOutside) {
       backgroundColor = Colors.transparent;
-      textColor = Colors.grey[400]!;
+      textColor = AppTokens.stone;
     } else if (isSelected || isToday) {
-      backgroundColor = todayColor;
-      textColor = Colors.white;
+      backgroundColor = selectedColor;
+      textColor = AppTokens.onDark;
     } else if (isPast && hasVideo) {
       backgroundColor = hasVideoColor;
-      textColor = Colors.white;
+      textColor = AppTokens.onDark;
     } else if (isPast && !hasVideo) {
       backgroundColor = noVideoColor;
-      textColor = Colors.black87;
+      textColor = AppTokens.slate;
     } else {
-      backgroundColor = Colors.grey[100]!;
-      textColor = Colors.black87;
+      backgroundColor = AppTokens.surfaceSoft;
+      textColor = AppTokens.charcoal;
     }
 
     return Container(
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppTokens.radiusMd),
       ),
       child: Center(
         child: Text(
           '${day.day}',
-          style: TextStyle(
+          style: AppTokens.bodySm.copyWith(
             color: textColor,
             fontWeight: FontWeight.w600,
-            fontSize: 14,
           ),
         ),
       ),
@@ -422,7 +412,9 @@ class _DualCalendarViewState extends State<DualCalendarView> with TickerProvider
 
   bool _isToday(DateTime day) {
     final now = DateTime.now();
-    return day.year == now.year && day.month == now.month && day.day == now.day;
+    return day.year == now.year &&
+        day.month == now.month &&
+        day.day == now.day;
   }
 
   bool _isSameDay(DateTime? a, DateTime? b) {

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/projects_provider.dart';
 import '../../core/models/project.dart';
+import '../../core/theme/tokens.dart';
 
 class CreateProjectScreen extends StatefulWidget {
   const CreateProjectScreen({super.key});
@@ -12,24 +13,25 @@ class CreateProjectScreen extends StatefulWidget {
   State<CreateProjectScreen> createState() => _CreateProjectScreenState();
 }
 
-class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerProviderStateMixin {
+class _CreateProjectScreenState extends State<CreateProjectScreen>
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   late AnimationController _slideController;
   late AnimationController _fadeController;
-  
+
   int _currentStep = 0;
   final int _totalSteps = 2;
-  
+
   // Step 1: Name and Label
   final _nameController = TextEditingController();
   final _labelController = TextEditingController();
   final _nameFocusNode = FocusNode();
   final _labelFocusNode = FocusNode();
   bool _nameValid = false;
-  
+
   // Step 2: Project Type
   ProjectType? _selectedType;
-  
+
   // Form state
   bool _isCreating = false;
 
@@ -56,7 +58,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _nameController.addListener(_validateName);
     _fadeController.forward();
   }
@@ -85,7 +87,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTokens.canvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -110,7 +112,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTokens.spaceLg),
       child: Row(
         children: [
           IconButton(
@@ -120,11 +122,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
           Expanded(
             child: Text(
               _currentStep == 0 ? 'Create Project' : 'Choose Type',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
+              style: AppTokens.cardTitle,
               textAlign: TextAlign.center,
             ),
           ),
@@ -136,7 +134,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
 
   Widget _buildProgressIndicator() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceXxxl),
       child: Row(
         children: [
           for (int i = 0; i < _totalSteps; i++) ...[
@@ -145,12 +143,14 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
                 duration: const Duration(milliseconds: 300),
                 height: 4,
                 decoration: BoxDecoration(
-                  color: i <= _currentStep ? Colors.black : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(2),
+                  color: i <= _currentStep
+                      ? AppTokens.ink
+                      : AppTokens.hairline,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusFull),
                 ),
               ),
             ),
-            if (i < _totalSteps - 1) const SizedBox(width: 8),
+            if (i < _totalSteps - 1) const SizedBox(width: AppTokens.spaceXs),
           ],
         ],
       ),
@@ -160,125 +160,62 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
   Widget _buildNameStep() {
     return FadeTransition(
       opacity: _fadeController,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppTokens.spaceXl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 40),
-            // Handwritten style title
-            const Text(
+            const SizedBox(height: AppTokens.spaceXxxl),
+            Text(
               'What\'s your project about?',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w300,
-                color: Colors.black,
-                height: 1.2,
-              ),
+              style: AppTokens.headingMd,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTokens.spaceXs),
             Text(
               'Give it a name that captures the essence',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-                height: 1.4,
-              ),
+              style: AppTokens.subtitle,
             ),
-            const SizedBox(height: 40),
-            
+            const SizedBox(height: AppTokens.spaceXxxl),
+
             // Project name field
-            const Text(
-              'Project Name *',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 12),
+            Text('Project Name *', style: AppTokens.bodyMdBold),
+            const SizedBox(height: AppTokens.spaceSm),
             TextField(
               controller: _nameController,
               focusNode: _nameFocusNode,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w400,
-              ),
+              style: AppTokens.subtitle.copyWith(color: AppTokens.ink),
               decoration: InputDecoration(
                 hintText: 'My amazing journey...',
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontWeight: FontWeight.w300,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Colors.black, width: 2),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                contentPadding: const EdgeInsets.all(20),
                 suffixIcon: _nameValid
-                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    ? const Icon(Icons.check_circle,
+                        color: AppTokens.successText)
                     : null,
               ),
               textCapitalization: TextCapitalization.words,
               onSubmitted: (_) => _labelFocusNode.requestFocus(),
             ),
-            
-            const SizedBox(height: 32),
-            
+
+            const SizedBox(height: AppTokens.spaceXxl),
+
             // Label field
-            const Text(
-              'Label (Optional)',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 12),
+            Text('Label (Optional)', style: AppTokens.bodyMdBold),
+            const SizedBox(height: AppTokens.spaceSm),
             TextField(
               controller: _labelController,
               focusNode: _labelFocusNode,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w400,
-              ),
-              decoration: InputDecoration(
+              style: AppTokens.subtitle.copyWith(color: AppTokens.ink),
+              decoration: const InputDecoration(
                 hintText: 'Travel, Growth, Fitness...',
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontWeight: FontWeight.w300,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Colors.black, width: 2),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                contentPadding: const EdgeInsets.all(20),
               ),
               textCapitalization: TextCapitalization.words,
             ),
-            
-            const SizedBox(height: 20),
-            
+
+            const SizedBox(height: AppTokens.spaceLg),
+
             // Suggested labels
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppTokens.spaceXs,
+              runSpacing: AppTokens.spaceXs,
               children: _suggestedLabels.map((label) {
                 return GestureDetector(
                   onTap: () {
@@ -286,26 +223,22 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
                     HapticFeedback.selectionClick();
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppTokens.spaceMd,
+                        vertical: AppTokens.spaceXs),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey[300]!),
+                      color: AppTokens.surface,
+                      borderRadius: BorderRadius.circular(AppTokens.radiusFull),
                     ),
                     child: Text(
                       label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: AppTokens.bodySmMedium
+                          .copyWith(color: AppTokens.charcoal),
                     ),
                   ),
                 );
               }).toList(),
             ),
-            
-            const Spacer(),
           ],
         ),
       ),
@@ -313,55 +246,46 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
   }
 
   Widget _buildTypeStep() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppTokens.spaceXl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 40),
-          const Text(
+          const SizedBox(height: AppTokens.spaceXxxl),
+          Text(
             'How do you want to organize?',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w300,
-              color: Colors.black,
-              height: 1.2,
-            ),
+            style: AppTokens.headingMd,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTokens.spaceXs),
           Text(
             'Choose the structure that fits your style',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              height: 1.4,
-            ),
+            style: AppTokens.subtitle,
           ),
-          const SizedBox(height: 40),
-          
+          const SizedBox(height: AppTokens.spaceXxxl),
+
           // Timeline option
           _buildProjectTypeCard(
             type: ProjectType.timeline,
             title: 'Timeline',
             subtitle: 'Calendar-based recording',
-            description: 'Perfect for daily journaling, progress tracking, or any project where dates matter. Record videos on specific days and see your journey unfold chronologically.',
+            description:
+                'Perfect for daily journaling, progress tracking, or any project where dates matter. Record videos on specific days and see your journey unfold chronologically.',
             icon: Icons.calendar_today_outlined,
-            color: const Color(0xFF4A90E2),
+            color: AppTokens.brandBlue,
           ),
-          
-          const SizedBox(height: 20),
-          
+
+          const SizedBox(height: AppTokens.spaceLg),
+
           // Freestyle option
           _buildProjectTypeCard(
             type: ProjectType.freestyle,
             title: 'Freestyle',
             subtitle: 'Record anytime, organize manually',
-            description: 'Great for creative projects, tutorials, or collections. Record whenever inspiration strikes and organize your videos however you like.',
+            description:
+                'Great for creative projects, tutorials, or collections. Record whenever inspiration strikes and organize your videos however you like.',
             icon: Icons.video_collection_outlined,
-            color: const Color(0xFF7ED321),
+            color: AppTokens.brandCoral,
           ),
-          
-          const Spacer(),
         ],
       ),
     );
@@ -376,7 +300,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
     required Color color,
   }) {
     final isSelected = _selectedType == type;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -386,22 +310,15 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppTokens.spaceLg),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? color : Colors.grey[300]!,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: color.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
+          color: isSelected
+              ? color.withValues(alpha: 0.08)
+              : AppTokens.surfaceSoft,
+          borderRadius: BorderRadius.circular(AppTokens.radiusXxl),
+          // Border only when selected — it's the selection signal.
+          border: isSelected
+              ? Border.all(color: color, width: 2)
               : null,
         ),
         child: Column(
@@ -413,30 +330,21 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppTokens.radiusLg),
                   ),
                   child: Icon(icon, color: color, size: 24),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppTokens.spaceMd),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
+                      Text(title, style: AppTokens.cardTitle),
                       Text(
                         subtitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: AppTokens.bodySm
+                            .copyWith(color: AppTokens.slate),
                       ),
                     ],
                   ),
@@ -445,13 +353,12 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
                   Icon(Icons.check_circle, color: color, size: 24),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTokens.spaceMd),
             Text(
               description,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.4,
+              style: AppTokens.bodySm.copyWith(
+                color: AppTokens.slate,
+                height: 1.5,
               ),
             ),
           ],
@@ -462,69 +369,37 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
 
   Widget _buildBottomActions() {
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 16, 24, 16 + MediaQuery.of(context).padding.bottom),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.fromLTRB(AppTokens.spaceXl, AppTokens.spaceMd,
+          AppTokens.spaceXl, AppTokens.spaceMd + MediaQuery.of(context).padding.bottom),
+      decoration: const BoxDecoration(color: AppTokens.canvas),
       child: Row(
         children: [
           if (_currentStep > 0)
             Expanded(
               child: OutlinedButton(
                 onPressed: _goToPreviousStep,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: BorderSide(color: Colors.grey[300]!),
-                ),
-                child: const Text(
-                  'Back',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
+                child: const Text('Back'),
               ),
             ),
-          if (_currentStep > 0) const SizedBox(width: 16),
+          if (_currentStep > 0) const SizedBox(width: AppTokens.spaceMd),
           Expanded(
             flex: _currentStep == 0 ? 1 : 2,
-            child: ElevatedButton(
+            child: FilledButton(
               onPressed: _canProceed() ? _handleNextAction : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
               child: _isCreating
                   ? const SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(AppTokens.onDark),
                       ),
                     )
                   : Text(
-                      _currentStep == _totalSteps - 1 ? 'Create Project' : 'Continue',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      _currentStep == _totalSteps - 1
+                          ? 'Create Project'
+                          : 'Continue',
                     ),
             ),
           ),
@@ -582,29 +457,30 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
     try {
       final projectName = _nameController.text.trim();
       final label = _labelController.text.trim();
-      
+
       // Create project with label if provided
-      final finalName = label.isNotEmpty ? '$projectName ($label)' : projectName;
-      
+      final finalName =
+          label.isNotEmpty ? '$projectName ($label)' : projectName;
+
       await context.read<ProjectsProvider>().createProject(
-        finalName,
-        _selectedType!,
-      );
+            finalName,
+            _selectedType!,
+          );
 
       if (mounted) {
         HapticFeedback.mediumImpact();
-        
+
         // Navigate back to projects list
         context.pop();
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Project "$projectName" created successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTokens.successText,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppTokens.radiusMd),
             ),
           ),
         );
@@ -614,10 +490,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> with TickerPr
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error creating project: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTokens.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppTokens.radiusMd),
             ),
           ),
         );

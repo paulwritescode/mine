@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/models/project.dart';
+import '../core/theme/tokens.dart';
 
 class ProjectCard extends StatelessWidget {
   final Project project;
@@ -16,76 +17,63 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTimeline = project.type == ProjectType.timeline;
+    // Project types read as distinct brand identities (MiniMax encoding).
+    final accent = isTimeline ? AppTokens.brandBlue : AppTokens.brandCoral;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppTokens.spaceSm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTokens.radiusXl),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTokens.spaceMd),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: project.type == ProjectType.timeline
-                      ? Colors.blue.withOpacity(0.1)
-                      : Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusLg),
                 ),
                 child: Icon(
-                  project.type == ProjectType.timeline
-                      ? Icons.timeline
-                      : Icons.video_collection,
-                  color: project.type == ProjectType.timeline
-                      ? Colors.blue
-                      : Colors.green,
+                  isTimeline ? Icons.timeline : Icons.video_collection,
+                  color: accent,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppTokens.spaceMd),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       project.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTokens.cardTitle,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppTokens.spaceXxs),
                     Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: AppTokens.spaceXs,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: project.type == ProjectType.timeline
-                                ? Colors.blue.withOpacity(0.1)
-                                : Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            color: accent.withValues(alpha: 0.10),
+                            borderRadius:
+                                BorderRadius.circular(AppTokens.radiusFull),
                           ),
                           child: Text(
-                            project.type == ProjectType.timeline
-                                ? 'Timeline'
-                                : 'Freestyle',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: project.type == ProjectType.timeline
-                                  ? Colors.blue
-                                  : Colors.green,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            isTimeline ? 'Timeline' : 'Freestyle',
+                            style: AppTokens.captionBold.copyWith(color: accent),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppTokens.spaceXs),
                         Text(
-                          DateFormat('MMM d, y').format(project.updatedAt.toLocal()),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                          DateFormat('MMM d, y')
+                              .format(project.updatedAt.toLocal()),
+                          style: AppTokens.caption,
                         ),
                       ],
                     ),
@@ -93,19 +81,26 @@ class ProjectCard extends StatelessWidget {
                 ),
               ),
               PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz, color: AppTokens.steel),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+                ),
                 onSelected: (value) {
                   if (value == 'delete') {
                     onDelete();
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete'),
+                        const Icon(Icons.delete_outline,
+                            color: AppTokens.error),
+                        const SizedBox(width: AppTokens.spaceXs),
+                        Text('Delete',
+                            style: AppTokens.bodySm
+                                .copyWith(color: AppTokens.error)),
                       ],
                     ),
                   ),

@@ -7,6 +7,7 @@ import '../../providers/snippets_provider.dart';
 import '../../providers/projects_provider.dart';
 import '../../core/models/project.dart';
 import '../../core/models/snippet.dart';
+import '../../core/theme/tokens.dart';
 import '../../services/video_export_service.dart';
 
 class ExportScreen extends StatefulWidget {
@@ -117,7 +118,7 @@ class _ExportScreenState extends State<ExportScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Video shared successfully!'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppTokens.successText,
             ),
           );
         }
@@ -161,10 +162,10 @@ class _ExportScreenState extends State<ExportScreen> {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success 
-              ? 'Video saved to gallery successfully!' 
+            content: Text(success
+              ? 'Video saved to gallery successfully!'
               : 'Failed to save to gallery'),
-            backgroundColor: success ? Colors.green : Colors.red,
+            backgroundColor: success ? AppTokens.successText : AppTokens.error,
           ),
         );
       }
@@ -174,7 +175,7 @@ class _ExportScreenState extends State<ExportScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save to gallery: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTokens.error,
           ),
         );
       }
@@ -532,16 +533,8 @@ class _ExportScreenState extends State<ExportScreen> {
           Row(
             children: [
               Expanded(
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: _isExporting || _snippets.isEmpty ? null : _exportProject,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                   child: _isExporting
                       ? SizedBox(
                           width: 20,
@@ -556,15 +549,11 @@ class _ExportScreenState extends State<ExportScreen> {
               ),
               if (_exportedVideoPath != null) ...[
                 const SizedBox(width: 12),
-                ElevatedButton(
+                FilledButton(
                   onPressed: _showExportOptions,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTokens.brandCoral,
+                    foregroundColor: AppTokens.onDark,
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -581,23 +570,21 @@ class _ExportScreenState extends State<ExportScreen> {
           if (_exportedVideoPath != null) ...[
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppTokens.spaceSm),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                color: AppTokens.successBg,
+                borderRadius: BorderRadius.circular(AppTokens.radiusMd),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.check_circle,
+                      color: AppTokens.successText, size: 20),
+                  const SizedBox(width: AppTokens.spaceXs),
                   Expanded(
                     child: Text(
                       'Export completed! Tap "Save & Share" to save to gallery or share.',
-                      style: TextStyle(
-                        color: Colors.green[300],
-                        fontSize: 12,
-                      ),
+                      style: AppTokens.caption
+                          .copyWith(color: AppTokens.successText),
                     ),
                   ),
                 ],

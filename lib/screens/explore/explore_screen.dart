@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/projects_provider.dart';
+import '../../core/theme/tokens.dart';
 import '../../widgets/project_card.dart';
 import 'package:go_router/go_router.dart';
 
@@ -88,19 +89,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   children: [
                     Text(
                       'Discover',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w300,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                      style: AppTokens.headingMd
+                          .copyWith(color: theme.colorScheme.onSurface),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppTokens.spaceXs),
                     Text(
                       'Browse through all your video projects',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
+                      style: AppTokens.subtitle,
                     ),
                   ],
                 ),
@@ -146,7 +141,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 Navigator.of(context).pop();
                 context.read<ProjectsProvider>().deleteProject(project.id);
               },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: AppTokens.error),
               child: const Text('Delete'),
             ),
           ],

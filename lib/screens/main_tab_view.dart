@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../core/theme/tokens.dart';
 import 'projects/projects_list_screen.dart';
 import 'settings/settings_screen.dart';
 
@@ -150,8 +151,6 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
   }
 
   Widget _buildCaptureButton() {
-    final theme = Theme.of(context);
-    
     return GestureDetector(
       onTapDown: (_) {
         _captureButtonController.forward();
@@ -174,19 +173,19 @@ class _MainTabViewState extends State<MainTabView> with TickerProviderStateMixin
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+                color: AppTokens.brandCoral,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    color: AppTokens.brandCoral.withValues(alpha: 0.35),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
                 ],
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.add,
-                color: theme.colorScheme.onPrimary,
+                color: AppTokens.onDark,
                 size: 28,
               ),
             ),

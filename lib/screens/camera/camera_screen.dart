@@ -7,6 +7,7 @@ import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/tokens.dart';
 
 class CameraScreen extends StatefulWidget {
   final String projectId;
@@ -150,7 +151,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTokens.inkStrong,
       body: SafeArea(
         child: Column(
           children: [
@@ -174,7 +175,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: const Icon(Icons.close, color: AppTokens.onDark),
             onPressed: () => context.pop(),
           ),
           Expanded(
@@ -183,7 +184,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
                 const Text(
                   'Record Video',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppTokens.onDark,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
@@ -191,8 +192,8 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
                 if (_selectedDate != null)
                   Text(
                     DateFormat('EEEE, MMMM d').format(_selectedDate!.toLocal()),
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: AppTokens.onDark.withValues(alpha: 0.7),
                       fontSize: 14,
                     ),
                   ),
@@ -210,15 +211,15 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: AppTokens.onDark.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           value: _selectedDuration,
-          dropdownColor: Colors.grey[800],
-          style: const TextStyle(color: Colors.white),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+          dropdownColor: const Color(0xFF1C1C1C),
+          style: const TextStyle(color: AppTokens.onDark),
+          icon: const Icon(Icons.keyboard_arrow_down, color: AppTokens.onDark),
           items: AppConstants.videoDurations.map((duration) {
             return DropdownMenuItem(
               value: duration,
@@ -242,7 +243,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: AppTokens.inkStrong,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Stack(
@@ -270,7 +271,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.9),
+                      color: AppTokens.brandCoral.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -280,7 +281,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: Colors.white,
+                            color: AppTokens.onDark,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -288,7 +289,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
                         Text(
                           'REC ${_countdown}s',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTokens.onDark,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -305,14 +306,14 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: AppTokens.inkStrong.withValues(alpha: 0.7),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text(
                   '$_countdown',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppTokens.onDark,
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                   ),
@@ -334,8 +335,8 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.grey[800]!,
-              Colors.grey[900]!,
+              const Color(0xFF1C1C1C),
+              AppTokens.inkStrong,
             ],
           ),
         ),
@@ -343,16 +344,16 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
                 size: 80,
-                color: Colors.white54,
+                color: AppTokens.onDark.withValues(alpha: 0.54),
               ),
               const SizedBox(height: 16),
               Text(
                 'Camera Error',
-                style: const TextStyle(
-                  color: Colors.white54,
+                style: TextStyle(
+                  color: AppTokens.onDark.withValues(alpha: 0.54),
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                 ),
@@ -363,8 +364,8 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
                 child: Text(
                   _errorMessage!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white38,
+                  style: TextStyle(
+                    color: AppTokens.onDark.withValues(alpha: 0.38),
                     fontSize: 14,
                   ),
                 ),
@@ -389,23 +390,23 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.grey[800]!,
-              Colors.grey[900]!,
+              const Color(0xFF1C1C1C),
+              AppTokens.inkStrong,
             ],
           ),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(
-                color: Colors.white54,
+                color: AppTokens.onDark.withValues(alpha: 0.54),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'Initializing Camera...',
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: AppTokens.onDark.withValues(alpha: 0.54),
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                 ),
@@ -431,12 +432,12 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: AppTokens.onDark.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.photo_library,
-                color: Colors.white,
+                color: AppTokens.onDark,
                 size: 24,
               ),
             ),
@@ -452,22 +453,24 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: _isRecording ? Colors.red : Colors.white,
+                    color: _isRecording
+                        ? AppTokens.brandCoral
+                        : AppTokens.onDark,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white,
+                      color: AppTokens.onDark,
                       width: 4,
                     ),
                   ),
                   child: _isRecording
                       ? const Icon(
                           Icons.stop,
-                          color: Colors.white,
+                          color: AppTokens.onDark,
                           size: 32,
                         )
                       : const Icon(
                           Icons.videocam,
-                          color: Colors.black,
+                          color: AppTokens.ink,
                           size: 32,
                         ),
                 );
@@ -480,12 +483,12 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: AppTokens.onDark.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.flip_camera_ios,
-                color: Colors.white,
+                color: AppTokens.onDark,
                 size: 24,
               ),
             ),
@@ -538,7 +541,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error starting recording: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTokens.error,
           ),
         );
       }
@@ -581,7 +584,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error stopping recording: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTokens.error,
           ),
         );
       }
@@ -593,7 +596,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Gallery functionality coming soon'),
-        backgroundColor: Colors.white24,
+        backgroundColor: AppTokens.ink,
       ),
     );
   }
@@ -624,7 +627,7 @@ class _CameraScreenState extends State<CameraScreen> with TickerProviderStateMix
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error switching camera: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTokens.error,
           ),
         );
       }

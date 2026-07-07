@@ -9,6 +9,7 @@ import 'package:path/path.dart' as path;
 import 'dart:io';
 import '../../providers/snippets_provider.dart';
 import '../../core/models/snippet.dart';
+import '../../core/theme/tokens.dart';
 
 class PostCaptureScreen extends StatefulWidget {
   final String videoPath;
@@ -115,7 +116,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTokens.inkStrong,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
@@ -144,7 +145,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: const Icon(Icons.close, color: AppTokens.onDark),
             onPressed: () => context.pop(),
           ),
           Expanded(
@@ -153,7 +154,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                 const Text(
                   'Review Video',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppTokens.onDark,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
@@ -161,8 +162,8 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                 if (_recordedDate != null)
                   Text(
                     DateFormat('EEEE, MMMM d • h:mm a').format(_recordedDate!.toLocal()),
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: AppTokens.onDark.withValues(alpha: 0.7),
                       fontSize: 14,
                     ),
                   ),
@@ -177,13 +178,13 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTokens.onDark),
                     ),
                   )
                 : const Text(
                     'Save',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppTokens.onDark,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -198,7 +199,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: AppTokens.inkStrong,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Stack(
@@ -224,12 +225,12 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: AppTokens.onDark.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   _videoController!.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                  color: Colors.black,
+                  color: AppTokens.ink,
                   size: 30,
                 ),
               ),
@@ -241,13 +242,13 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: AppTokens.inkStrong.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 '${widget.duration}s',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTokens.onDark,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -269,23 +270,23 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.grey[800]!,
-              Colors.grey[900]!,
+              const Color(0xFF1C1C1C),
+              AppTokens.inkStrong,
             ],
           ),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(
-                color: Colors.white54,
+                color: AppTokens.onDark.withValues(alpha: 0.54),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'Loading Video...',
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: AppTokens.onDark.withValues(alpha: 0.54),
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                 ),
@@ -318,7 +319,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppTokens.onDark,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
@@ -333,21 +334,14 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppTokens.hairline,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 24),
             // Note field
-            const Text(
-              'Add a note (optional)',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
+            Text('Add a note (optional)', style: AppTokens.bodyMdBold),
             const SizedBox(height: 8),
             TextField(
               controller: _noteController,
@@ -355,49 +349,22 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
               maxLines: 2,
               textInputAction: TextInputAction.next,
               onSubmitted: (_) => _locationFocusNode.requestFocus(),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'What happened in this moment?',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.black),
-                ),
-                contentPadding: const EdgeInsets.all(16),
               ),
             ),
             const SizedBox(height: 16),
             // Location field
-            const Text(
-              'Location (optional)',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
+            Text('Location (optional)', style: AppTokens.bodyMdBold),
             const SizedBox(height: 8),
             TextField(
               controller: _locationController,
               focusNode: _locationFocusNode,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _locationFocusNode.unfocus(),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Where was this recorded?',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: Icon(Icons.location_on, color: Colors.grey[500]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.black),
-                ),
-                contentPadding: const EdgeInsets.all(16),
+                prefixIcon: Icon(Icons.location_on, color: AppTokens.stone),
               ),
             ),
             // Add some bottom padding to ensure fields are visible above keyboard
@@ -468,7 +435,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Video saved successfully!'),
-                backgroundColor: Colors.green,
+                backgroundColor: AppTokens.successText,
               ),
             );
           }
@@ -479,7 +446,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving video: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTokens.error,
           ),
         );
       }

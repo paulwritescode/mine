@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import '../core/models/snippet.dart';
+import '../core/theme/tokens.dart';
 
 class DateVideoDisplay extends StatelessWidget {
   final List<Snippet> snippets;
@@ -22,8 +23,11 @@ class DateVideoDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (snippets.isEmpty) {
-      return const Center(
-        child: Text('No videos for this date'),
+      return Center(
+        child: Text(
+          'No videos for this date',
+          style: AppTokens.bodyMd.copyWith(color: AppTokens.slate),
+        ),
       );
     }
 
@@ -38,24 +42,22 @@ class DateVideoDisplay extends StatelessWidget {
 
   Widget _buildVideoCard(BuildContext context, Snippet snippet) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      margin: const EdgeInsets.only(bottom: AppTokens.spaceMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Video thumbnail/preview area
           InkWell(
             onTap: () => onVideoTap(snippet),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(AppTokens.radiusXl)),
             child: Container(
               height: 200,
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              decoration: const BoxDecoration(
+                color: AppTokens.surface,
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(AppTokens.radiusXl)),
               ),
               child: Stack(
                 alignment: Alignment.center,
@@ -67,30 +69,30 @@ class DateVideoDisplay extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
+                      color: AppTokens.inkStrong.withValues(alpha: 0.65),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.play_arrow,
-                      color: Colors.white,
+                      color: AppTokens.onDark,
                       size: 30,
                     ),
                   ),
                   // Duration badge
                   Positioned(
-                    bottom: 12,
-                    right: 12,
+                    bottom: AppTokens.spaceSm,
+                    right: AppTokens.spaceSm,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppTokens.spaceXs, vertical: AppTokens.spaceXxs),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppTokens.inkStrong.withValues(alpha: 0.65),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusFull),
                       ),
                       child: Text(
                         '${snippet.duration}s',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
+                        style: AppTokens.caption.copyWith(
+                          color: AppTokens.onDark,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -102,7 +104,7 @@ class DateVideoDisplay extends StatelessWidget {
           ),
           // Video metadata
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTokens.spaceMd),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -111,42 +113,37 @@ class DateVideoDisplay extends StatelessWidget {
                   children: [
                     Text(
                       DateFormat('h:mm a').format(snippet.recordedAt.toLocal()),
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: AppTokens.bodyMd.copyWith(
+                        color: AppTokens.ink,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black,
                       ),
                     ),
                     if (isToday) _buildActionButtons(snippet),
                   ],
                 ),
                 if (snippet.note != null && snippet.note!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTokens.spaceXs),
                   Text(
                     snippet.note!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: AppTokens.bodySm.copyWith(color: AppTokens.slate),
                   ),
                 ],
-                if (snippet.location != null && snippet.location!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                if (snippet.location != null &&
+                    snippet.location!.isNotEmpty) ...[
+                  const SizedBox(height: AppTokens.spaceXs),
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.location_on,
                         size: 16,
-                        color: Colors.grey[500],
+                        color: AppTokens.stone,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppTokens.spaceXxs),
                       Expanded(
                         child: Text(
                           snippet.location!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
+                          style:
+                              AppTokens.caption.copyWith(color: AppTokens.stone),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -162,7 +159,8 @@ class DateVideoDisplay extends StatelessWidget {
   }
 
   Widget _buildThumbnail(Snippet snippet) {
-    if (snippet.thumbnailPath != null && File(snippet.thumbnailPath!).existsSync()) {
+    if (snippet.thumbnailPath != null &&
+        File(snippet.thumbnailPath!).existsSync()) {
       return Image.file(
         File(snippet.thumbnailPath!),
         width: double.infinity,
@@ -170,27 +168,25 @@ class DateVideoDisplay extends StatelessWidget {
         fit: BoxFit.cover,
       );
     }
-    
+
     // Fallback placeholder
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.grey[300]!,
-            Colors.grey[100]!,
-          ],
+          colors: [AppTokens.hairline, AppTokens.surface],
         ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppTokens.radiusXl)),
       ),
       child: const Center(
         child: Icon(
           Icons.videocam,
           size: 48,
-          color: Colors.grey,
+          color: AppTokens.steel,
         ),
       ),
     );
@@ -202,23 +198,17 @@ class DateVideoDisplay extends StatelessWidget {
       children: [
         if (onEditTap != null)
           IconButton(
-            icon: const Icon(Icons.edit, size: 20),
+            icon: const Icon(Icons.edit_outlined, size: 20),
             onPressed: () => onEditTap!(snippet),
-            color: Colors.grey[600],
-            constraints: const BoxConstraints(
-              minWidth: 32,
-              minHeight: 32,
-            ),
+            color: AppTokens.slate,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
         if (onDeleteTap != null)
           IconButton(
-            icon: const Icon(Icons.delete, size: 20),
+            icon: const Icon(Icons.delete_outline, size: 20),
             onPressed: () => onDeleteTap!(snippet),
-            color: Colors.red[400],
-            constraints: const BoxConstraints(
-              minWidth: 32,
-              minHeight: 32,
-            ),
+            color: AppTokens.error,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
       ],
     );

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/projects_provider.dart';
 import '../../core/models/project.dart';
+import '../../core/theme/tokens.dart';
 import '../../widgets/project_card.dart';
 
 class ProjectsListScreen extends StatefulWidget {
@@ -44,26 +45,22 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.video_library_outlined,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: AppTokens.stone,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTokens.spaceMd),
                   Text(
                     'No projects yet',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    style: AppTokens.headingSm.copyWith(color: AppTokens.ink),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTokens.spaceXs),
                   Text(
                     'Create your first project to get started',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[500],
-                    ),
+                    style: AppTokens.bodyMd.copyWith(color: AppTokens.slate),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppTokens.spaceXl),
                   ElevatedButton.icon(
                     onPressed: () => context.push('/create-project'),
                     icon: const Icon(Icons.add),
@@ -108,7 +105,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                 Navigator.of(context).pop();
                 context.read<ProjectsProvider>().deleteProject(project.id);
               },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: AppTokens.error),
               child: const Text('Delete'),
             ),
           ],
