@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import 'dart:io';
 import '../core/models/snippet.dart';
@@ -159,7 +160,9 @@ class DateVideoDisplay extends StatelessWidget {
   }
 
   Widget _buildThumbnail(Snippet snippet) {
-    if (snippet.thumbnailPath != null &&
+    // dart:io File is unavailable on web — fall back to the placeholder.
+    if (!kIsWeb &&
+        snippet.thumbnailPath != null &&
         File(snippet.thumbnailPath!).existsSync()) {
       return Image.file(
         File(snippet.thumbnailPath!),

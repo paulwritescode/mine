@@ -141,7 +141,7 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTokens.spaceMd),
       child: Row(
         children: [
           IconButton(
@@ -151,45 +151,22 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
           Expanded(
             child: Column(
               children: [
-                const Text(
-                  'Review Video',
-                  style: TextStyle(
-                    color: AppTokens.onDark,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Text(
+                  'Review',
+                  style: AppTokens.bodyMdBold.copyWith(color: AppTokens.onDark),
                 ),
                 if (_recordedDate != null)
                   Text(
-                    DateFormat('EEEE, MMMM d • h:mm a').format(_recordedDate!.toLocal()),
-                    style: TextStyle(
-                      color: AppTokens.onDark.withValues(alpha: 0.7),
-                      fontSize: 14,
-                    ),
+                    DateFormat('EEE, MMM d • h:mm a')
+                        .format(_recordedDate!.toLocal()),
+                    style: AppTokens.caption
+                        .copyWith(color: AppTokens.onDark.withValues(alpha: 0.6)),
                   ),
               ],
             ),
           ),
-          TextButton(
-            onPressed: _isSaving ? null : _saveVideo,
-            child: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTokens.onDark),
-                    ),
-                  )
-                : const Text(
-                    'Save',
-                    style: TextStyle(
-                      color: AppTokens.onDark,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-          ),
+          // Balance the close button.
+          const SizedBox(width: 48),
         ],
       ),
     );
@@ -319,8 +296,9 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: AppTokens.onDark,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppTokens.canvas,
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppTokens.radiusXxl)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -339,10 +317,18 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTokens.spaceXl),
+            // Section header — sets the hierarchy for the sheet.
+            Text('Add details', style: AppTokens.headingSm),
+            const SizedBox(height: AppTokens.spaceXxs),
+            Text(
+              'Optional — a caption helps you remember the moment',
+              style: AppTokens.bodySm.copyWith(color: AppTokens.stone),
+            ),
+            const SizedBox(height: AppTokens.spaceXl),
             // Note field
-            Text('Add a note (optional)', style: AppTokens.bodyMdBold),
-            const SizedBox(height: 8),
+            _fieldLabel('NOTE'),
+            const SizedBox(height: AppTokens.spaceXs),
             TextField(
               controller: _noteController,
               focusNode: _noteFocusNode,
@@ -353,10 +339,10 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                 hintText: 'What happened in this moment?',
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTokens.spaceMd),
             // Location field
-            Text('Location (optional)', style: AppTokens.bodyMdBold),
-            const SizedBox(height: 8),
+            _fieldLabel('LOCATION'),
+            const SizedBox(height: AppTokens.spaceXs),
             TextField(
               controller: _locationController,
               focusNode: _locationFocusNode,
@@ -367,10 +353,42 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
                 prefixIcon: Icon(Icons.location_on, color: AppTokens.stone),
               ),
             ),
-            // Add some bottom padding to ensure fields are visible above keyboard
-            SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 0),
+            const SizedBox(height: AppTokens.spaceXl),
+            // Primary save action.
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _isSaving ? null : _saveVideo,
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(AppTokens.onDark),
+                        ),
+                      )
+                    : const Text('Save moment'),
+              ),
+            ),
+            // Keep fields visible above the keyboard.
+            SizedBox(
+                height: MediaQuery.of(context).viewInsets.bottom > 0
+                    ? AppTokens.spaceMd
+                    : 0),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String text) {
+    return Text(
+      text,
+      style: AppTokens.captionBold.copyWith(
+        color: AppTokens.steel,
+        letterSpacing: 0.6,
       ),
     );
   }
@@ -433,9 +451,17 @@ class _PostCaptureScreenState extends State<PostCaptureScreen> {
         Future.microtask(() {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Video saved successfully!'),
-                backgroundColor: AppTokens.successText,
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle,
+                        color: AppTokens.brandCoral, size: 20),
+                    const SizedBox(width: AppTokens.spaceXs),
+                    Text('Moment saved',
+                        style: AppTokens.bodySm
+                            .copyWith(color: AppTokens.onDark)),
+                  ],
+                ),
               ),
             );
           }

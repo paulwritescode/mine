@@ -25,65 +25,123 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mine'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.push('/create-project'),
-          ),
-        ],
-      ),
-      body: Consumer<ProjectsProvider>(
-        builder: (context, projectsProvider, child) {
-          if (projectsProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SafeArea(
+        child: Consumer<ProjectsProvider>(
+          builder: (context, projectsProvider, child) {
+            final projects = projectsProvider.projects;
+            final count = projects.length;
 
-          if (projectsProvider.projects.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.video_library_outlined,
-                    size: 64,
-                    color: AppTokens.stone,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Editorial header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(AppTokens.spaceXl,
+                      AppTokens.spaceMd, AppTokens.spaceMd, AppTokens.spaceXs),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Mine',
+                                style: AppTokens.headingLg
+                                    .copyWith(color: AppTokens.ink)),
+                            const SizedBox(height: 2),
+                            Text(
+                              count == 0
+                                  ? 'Your video journal'
+                                  : count == 1
+                                      ? '1 project'
+                                      : '$count projects',
+                              style: AppTokens.bodySm
+                                  .copyWith(color: AppTokens.stone),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add, color: AppTokens.ink),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppTokens.surface,
+                        ),
+                        onPressed: () => context.push('/create-project'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppTokens.spaceMd),
-                  Text(
-                    'No projects yet',
-                    style: AppTokens.headingSm.copyWith(color: AppTokens.ink),
-                  ),
-                  const SizedBox(height: AppTokens.spaceXs),
-                  Text(
-                    'Create your first project to get started',
-                    style: AppTokens.bodyMd.copyWith(color: AppTokens.slate),
-                  ),
-                  const SizedBox(height: AppTokens.spaceXl),
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/create-project'),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create Project'),
-                  ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child: projectsProvider.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : projects.isEmpty
+                          ? _buildEmptyState(context)
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(
+                                  AppTokens.spaceMd,
+                                  AppTokens.spaceXs,
+                                  AppTokens.spaceMd,
+                                  AppTokens.spaceXxxl),
+                              itemCount: projects.length,
+                              itemBuilder: (context, index) {
+                                final project = projects[index];
+                                return ProjectCard(
+                                  project: project,
+                                  onTap: () =>
+                                      context.push('/project/${project.id}'),
+                                  onDelete: () =>
+                                      _showDeleteDialog(context, project),
+                                );
+                              },
+                            ),
+                ),
+              ],
             );
-          }
+          },
+        ),
+      ),
+    );
+  }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: projectsProvider.projects.length,
-            itemBuilder: (context, index) {
-              final project = projectsProvider.projects[index];
-              return ProjectCard(
-                project: project,
-                onTap: () => context.push('/project/${project.id}'),
-                onDelete: () => _showDeleteDialog(context, project),
-              );
-            },
-          );
-        },
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTokens.spaceXl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: AppTokens.brandCoral.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.video_library_outlined,
+                size: 40,
+                color: AppTokens.brandCoral,
+              ),
+            ),
+            const SizedBox(height: AppTokens.spaceXl),
+            Text(
+              'No projects yet',
+              style: AppTokens.headingSm.copyWith(color: AppTokens.ink),
+            ),
+            const SizedBox(height: AppTokens.spaceXs),
+            Text(
+              'Create your first project to get started',
+              style: AppTokens.bodyMd.copyWith(color: AppTokens.slate),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppTokens.spaceXl),
+            FilledButton.icon(
+              onPressed: () => context.push('/create-project'),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Create Project'),
+            ),
+          ],
+        ),
       ),
     );
   }

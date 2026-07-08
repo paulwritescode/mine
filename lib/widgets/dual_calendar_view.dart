@@ -7,6 +7,14 @@ import '../core/theme/tokens.dart';
 
 enum CalendarViewType { week, month }
 
+/// A minimal week/month calendar.
+///
+/// Design language (MiniMax): the grid reads as a plain calendar — no
+/// heavy color-filled cells. State is expressed through restrained signals:
+///   • selected day → filled ink circle (white numeral)
+///   • today (unselected) → coral numeral
+///   • a day that has a video → a small coral dot beneath the numeral
+///   • future days → muted numeral
 class DualCalendarView extends StatefulWidget {
   final List<Snippet> snippets;
   final DateTime? selectedDay;
@@ -25,85 +33,57 @@ class DualCalendarView extends StatefulWidget {
   State<DualCalendarView> createState() => _DualCalendarViewState();
 }
 
-class _DualCalendarViewState extends State<DualCalendarView>
-    with TickerProviderStateMixin {
+class _DualCalendarViewState extends State<DualCalendarView> {
   CalendarViewType _viewType = CalendarViewType.week;
   late DateTime _focusedDay;
-  late AnimationController _switchController;
-  late AnimationController _fadeController;
-
-  // Day-state encoding (MiniMax language):
-  //  • today / selected → black (the brand's selection state)
-  //  • past day with video → Brand Coral (the signature "captured" accent)
-  //  • past day without video → quiet surface grey
-  static const Color selectedColor = AppTokens.ink;
-  static const Color hasVideoColor = AppTokens.brandCoral;
-  static const Color noVideoColor = AppTokens.surface;
 
   @override
   void initState() {
     super.initState();
     _focusedDay = widget.selectedDay ?? DateTime.now();
-    _switchController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _fadeController.forward();
-  }
-
-  @override
-  void dispose() {
-    _switchController.dispose();
-    _fadeController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildCalendarHeader(),
+        _buildHeader(),
         const SizedBox(height: AppTokens.spaceMd),
-        _buildCalendarContent(),
+        AnimatedSwitcher(
+          duration: AppTokens.animationMedium,
+          child: _viewType == CalendarViewType.week
+              ? _buildWeekView()
+              : _buildMonthView(),
+        ),
       ],
     );
   }
 
-  Widget _buildCalendarHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMd),
-      child: Row(
-        children: [
-          // Month/Year display
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('MMMM yyyy').format(_focusedDay),
-                  style: AppTokens.headingSm,
-                ),
-                if (widget.selectedDay != null)
-                  Text(
-                    DateFormat('EEEE, d').format(widget.selectedDay!),
-                    style: AppTokens.bodySm.copyWith(color: AppTokens.slate),
-                  ),
-              ],
-            ),
+  // ---- Header: month label + week/month segmented toggle -------------------
+
+  Widget _buildHeader() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            DateFormat('MMMM').format(_focusedDay),
+            style: AppTokens.headingSm.copyWith(color: AppTokens.ink),
           ),
-          // View toggle buttons
-          _buildViewToggle(),
-        ],
-      ),
+        ),
+        Text(
+          DateFormat('yyyy').format(_focusedDay),
+          style: AppTokens.bodySm.copyWith(color: AppTokens.stone),
+        ),
+        const SizedBox(width: AppTokens.spaceMd),
+        _buildViewToggle(),
+      ],
     );
   }
 
   Widget _buildViewToggle() {
     return Container(
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppTokens.surface,
         borderRadius: BorderRadius.circular(AppTokens.radiusFull),
@@ -111,310 +91,242 @@ class _DualCalendarViewState extends State<DualCalendarView>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildToggleButton(CalendarViewType.week, Icons.view_week, 'Week'),
-          _buildToggleButton(
-              CalendarViewType.month, Icons.calendar_month, 'Month'),
+          _buildToggleButton(CalendarViewType.week, 'Week'),
+          _buildToggleButton(CalendarViewType.month, 'Month'),
         ],
       ),
     );
   }
 
-  Widget _buildToggleButton(
-      CalendarViewType type, IconData icon, String label) {
+  Widget _buildToggleButton(CalendarViewType type, String label) {
     final isSelected = _viewType == type;
-
     return GestureDetector(
       onTap: () => _switchView(type),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppTokens.animationFast,
         padding: const EdgeInsets.symmetric(
-            horizontal: AppTokens.spaceSm, vertical: AppTokens.spaceXs),
+            horizontal: AppTokens.spaceMd, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppTokens.ink : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTokens.radiusFull),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppTokens.onDark : AppTokens.slate,
-            ),
-            const SizedBox(width: AppTokens.spaceXxs),
-            Text(
-              label,
-              style: AppTokens.micro.copyWith(
-                fontWeight: FontWeight.w500,
-                color: isSelected ? AppTokens.onDark : AppTokens.slate,
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: AppTokens.captionBold.copyWith(
+            color: isSelected ? AppTokens.onDark : AppTokens.steel,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCalendarContent() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: _viewType == CalendarViewType.week
-          ? _buildWeekView()
-          : _buildMonthView(),
-    );
-  }
+  // ---- Week view -----------------------------------------------------------
 
   Widget _buildWeekView() {
-    return SizedBox(
-      key: const ValueKey('week'),
-      height: 140,
-      child: _buildCustomWeekCalendar(),
-    );
-  }
-
-  Widget _buildCustomWeekCalendar() {
-    // Calculate the start of the week for the focused day
-    final focusedWeekStart =
+    final weekStart =
         _focusedDay.subtract(Duration(days: _focusedDay.weekday - 1));
 
     return Column(
+      key: const ValueKey('week'),
       children: [
-        // Navigation row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton(
-              icon: const Icon(Icons.chevron_left, color: AppTokens.ink),
-              onPressed: () {
-                setState(() {
-                  _focusedDay = _focusedDay.subtract(const Duration(days: 7));
-                });
-                widget.onPageChanged(_focusedDay);
-              },
-            ),
+            _navButton(Icons.chevron_left, () => _shiftWeek(-7)),
             Text(
-              DateFormat('MMMM yyyy').format(_focusedDay),
-              style: AppTokens.bodyMd.copyWith(
-                color: AppTokens.ink,
-                fontWeight: FontWeight.w600,
-              ),
+              _weekRangeLabel(weekStart),
+              style: AppTokens.caption.copyWith(color: AppTokens.slate),
             ),
-            IconButton(
-              icon: const Icon(Icons.chevron_right, color: AppTokens.ink),
-              onPressed: () {
-                setState(() {
-                  _focusedDay = _focusedDay.add(const Duration(days: 7));
-                });
-                widget.onPageChanged(_focusedDay);
-              },
-            ),
+            _navButton(Icons.chevron_right, () => _shiftWeek(7)),
           ],
         ),
         const SizedBox(height: AppTokens.spaceXs),
-        // Week dates
         Row(
-          children: List.generate(7, (index) {
-            final day = focusedWeekStart.add(Duration(days: index));
-            return Expanded(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppTokens.spaceXxs),
-                child: _buildWeekDayCell(day),
-              ),
-            );
+          children: List.generate(7, (i) {
+            final day = weekStart.add(Duration(days: i));
+            return Expanded(child: _buildWeekCell(day));
           }),
         ),
       ],
     );
   }
 
-  Widget _buildWeekDayCell(DateTime day) {
-    final isToday = _isToday(day);
-    final isSelected =
-        widget.selectedDay != null && _isSameDay(widget.selectedDay!, day);
-    final hasVideo = _getSnippetsForDay(day).isNotEmpty;
-    final isPast = day.isBefore(DateTime.now().subtract(const Duration(days: 1)));
-
-    Color backgroundColor;
-    Color textColor;
-
-    if (isSelected || isToday) {
-      backgroundColor = selectedColor;
-      textColor = AppTokens.onDark;
-    } else if (isPast && hasVideo) {
-      backgroundColor = hasVideoColor;
-      textColor = AppTokens.onDark;
-    } else if (isPast && !hasVideo) {
-      backgroundColor = noVideoColor;
-      textColor = AppTokens.slate;
-    } else {
-      backgroundColor = AppTokens.surfaceSoft;
-      textColor = AppTokens.charcoal;
+  String _weekRangeLabel(DateTime start) {
+    final end = start.add(const Duration(days: 6));
+    if (start.month == end.month) {
+      return '${DateFormat('MMM d').format(start)} – ${DateFormat('d').format(end)}';
     }
+    return '${DateFormat('MMM d').format(start)} – ${DateFormat('MMM d').format(end)}';
+  }
 
+  Widget _navButton(IconData icon, VoidCallback onTap) {
+    return IconButton(
+      icon: Icon(icon, color: AppTokens.slate, size: 22),
+      splashRadius: 20,
+      visualDensity: VisualDensity.compact,
+      onPressed: onTap,
+    );
+  }
+
+  Widget _buildWeekCell(DateTime day) {
+    final state = _stateFor(day);
     return GestureDetector(
       onTap: () {
         widget.onDaySelected(day);
-        setState(() {
-          _focusedDay = day;
-        });
+        setState(() => _focusedDay = day);
+        HapticFeedback.selectionClick();
       },
-      child: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(AppTokens.radiusLg),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '${day.day}',
-              style: AppTokens.cardTitle.copyWith(color: textColor),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Text(
+            DateFormat('EEE').format(day).toUpperCase(),
+            style: AppTokens.micro.copyWith(
+              color: state.isSelected ? AppTokens.ink : AppTokens.stone,
+              fontWeight:
+                  state.isSelected ? FontWeight.w600 : FontWeight.w400,
+              letterSpacing: 0.5,
             ),
-            const SizedBox(height: 2),
-            Text(
-              DateFormat('EEE').format(day),
-              style: AppTokens.micro.copyWith(
-                fontWeight: FontWeight.w500,
-                color: textColor.withValues(alpha: 0.8),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppTokens.spaceXs),
+          _dayNumber(day, state, diameter: 40, fontSize: 17),
+          const SizedBox(height: 6),
+          _videoDot(state),
+        ],
       ),
     );
   }
 
+  // ---- Month view ----------------------------------------------------------
+
   Widget _buildMonthView() {
-    return Container(
+    return Padding(
       key: const ValueKey('month'),
+      padding: const EdgeInsets.only(top: AppTokens.spaceXs),
       child: TableCalendar<Snippet>(
         firstDay: DateTime.utc(2020, 1, 1),
         lastDay: DateTime.utc(2030, 12, 31),
         focusedDay: _focusedDay,
         calendarFormat: CalendarFormat.month,
-        eventLoader: (day) => _getSnippetsForDay(day),
+        headerVisible: false,
+        rowHeight: 52,
+        daysOfWeekHeight: 28,
+        eventLoader: _snippetsForDay,
         startingDayOfWeek: StartingDayOfWeek.monday,
         selectedDayPredicate: (day) => _isSameDay(widget.selectedDay, day),
         onDaySelected: (selectedDay, focusedDay) {
           widget.onDaySelected(selectedDay);
-          setState(() {
-            _focusedDay = focusedDay;
-          });
+          setState(() => _focusedDay = focusedDay);
+          HapticFeedback.selectionClick();
         },
         onPageChanged: (focusedDay) {
-          setState(() {
-            _focusedDay = focusedDay;
-          });
+          setState(() => _focusedDay = focusedDay);
           widget.onPageChanged(focusedDay);
         },
+        daysOfWeekStyle: DaysOfWeekStyle(
+          weekdayStyle: AppTokens.micro.copyWith(
+              color: AppTokens.stone, letterSpacing: 0.5),
+          weekendStyle: AppTokens.micro.copyWith(
+              color: AppTokens.stone, letterSpacing: 0.5),
+        ),
         calendarStyle: const CalendarStyle(
           outsideDaysVisible: false,
-          // Remove default decorations since we're using custom builders
-          todayDecoration: BoxDecoration(color: Colors.transparent),
-          selectedDecoration: BoxDecoration(color: Colors.transparent),
-          defaultDecoration: BoxDecoration(color: Colors.transparent),
-          weekendDecoration: BoxDecoration(color: Colors.transparent),
-          // Text styles
-          todayTextStyle: TextStyle(color: Colors.transparent),
-          selectedTextStyle: TextStyle(color: Colors.transparent),
-          defaultTextStyle: TextStyle(color: Colors.transparent),
-          weekendTextStyle: TextStyle(color: Colors.transparent),
-          // Marker styling
           markersMaxCount: 0,
           canMarkersOverflow: false,
         ),
         calendarBuilders: CalendarBuilders(
-          defaultBuilder: (context, day, focusedDay) {
-            return _buildDayCell(day, false, false);
-          },
-          todayBuilder: (context, day, focusedDay) {
-            return _buildDayCell(day, true, false);
-          },
-          selectedBuilder: (context, day, focusedDay) {
-            return _buildDayCell(day, false, true);
-          },
-          outsideBuilder: (context, day, focusedDay) {
-            return _buildDayCell(day, false, false, isOutside: true);
-          },
-        ),
-        headerStyle: HeaderStyle(
-          formatButtonVisible: false,
-          titleCentered: true,
-          titleTextStyle: AppTokens.subtitle.copyWith(
-            color: AppTokens.ink,
-            fontWeight: FontWeight.w600,
-          ),
-          leftChevronIcon:
-              const Icon(Icons.chevron_left, color: AppTokens.ink),
-          rightChevronIcon:
-              const Icon(Icons.chevron_right, color: AppTokens.ink),
+          defaultBuilder: (context, day, _) => _buildMonthCell(day),
+          todayBuilder: (context, day, _) => _buildMonthCell(day),
+          selectedBuilder: (context, day, _) => _buildMonthCell(day),
+          outsideBuilder: (context, day, _) => const SizedBox.shrink(),
         ),
       ),
     );
   }
 
-  Widget _buildDayCell(DateTime day, bool isToday, bool isSelected,
-      {bool isOutside = false}) {
-    final hasVideo = _getSnippetsForDay(day).isNotEmpty;
-    final isPast = day.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+  Widget _buildMonthCell(DateTime day) {
+    final state = _stateFor(day);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _dayNumber(day, state, diameter: 34, fontSize: 14),
+        const SizedBox(height: 4),
+        _videoDot(state),
+      ],
+    );
+  }
 
-    Color backgroundColor;
+  // ---- Shared cell atoms ---------------------------------------------------
+
+  Widget _dayNumber(DateTime day, _DayState state,
+      {required double diameter, required double fontSize}) {
     Color textColor;
+    FontWeight weight = FontWeight.w500;
 
-    if (isOutside) {
-      backgroundColor = Colors.transparent;
+    if (state.isSelected) {
+      textColor = AppTokens.onDark;
+      weight = FontWeight.w600;
+    } else if (state.isToday) {
+      textColor = AppTokens.brandCoral;
+      weight = FontWeight.w700;
+    } else if (state.isFuture) {
       textColor = AppTokens.stone;
-    } else if (isSelected || isToday) {
-      backgroundColor = selectedColor;
-      textColor = AppTokens.onDark;
-    } else if (isPast && hasVideo) {
-      backgroundColor = hasVideoColor;
-      textColor = AppTokens.onDark;
-    } else if (isPast && !hasVideo) {
-      backgroundColor = noVideoColor;
-      textColor = AppTokens.slate;
     } else {
-      backgroundColor = AppTokens.surfaceSoft;
       textColor = AppTokens.charcoal;
     }
 
     return Container(
-      margin: const EdgeInsets.all(2),
+      width: diameter,
+      height: diameter,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+        color: state.isSelected ? AppTokens.ink : Colors.transparent,
+        shape: BoxShape.circle,
       ),
-      child: Center(
-        child: Text(
-          '${day.day}',
-          style: AppTokens.bodySm.copyWith(
-            color: textColor,
-            fontWeight: FontWeight.w600,
-          ),
+      child: Text(
+        '${day.day}',
+        style: AppTokens.bodySm.copyWith(
+          fontSize: fontSize,
+          fontWeight: weight,
+          color: textColor,
+          height: 1.0,
         ),
       ),
     );
   }
 
-  List<Snippet> _getSnippetsForDay(DateTime day) {
-    return widget.snippets.where((snippet) {
-      final snippetDate = DateTime(
-        snippet.recordedAt.year,
-        snippet.recordedAt.month,
-        snippet.recordedAt.day,
-      );
-      final targetDate = DateTime(day.year, day.month, day.day);
-      return snippetDate.isAtSameMomentAs(targetDate);
-    }).toList();
+  Widget _videoDot(_DayState state) {
+    return Container(
+      width: 5,
+      height: 5,
+      decoration: BoxDecoration(
+        color: state.hasVideo
+            ? (state.isSelected ? AppTokens.ink : AppTokens.brandCoral)
+            : Colors.transparent,
+        shape: BoxShape.circle,
+      ),
+    );
   }
 
-  bool _isToday(DateTime day) {
+  // ---- State helpers -------------------------------------------------------
+
+  _DayState _stateFor(DateTime day) {
     final now = DateTime.now();
-    return day.year == now.year &&
-        day.month == now.month &&
-        day.day == now.day;
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(day.year, day.month, day.day);
+    return _DayState(
+      isSelected:
+          widget.selectedDay != null && _isSameDay(widget.selectedDay!, day),
+      isToday: _isSameDay(day, now),
+      isFuture: d.isAfter(today),
+      hasVideo: _snippetsForDay(day).isNotEmpty,
+    );
+  }
+
+  List<Snippet> _snippetsForDay(DateTime day) {
+    return widget.snippets.where((snippet) {
+      return _isSameDay(snippet.recordedAt, day);
+    }).toList();
   }
 
   bool _isSameDay(DateTime? a, DateTime? b) {
@@ -422,12 +334,30 @@ class _DualCalendarViewState extends State<DualCalendarView>
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  void _switchView(CalendarViewType newType) {
-    if (_viewType != newType) {
+  void _shiftWeek(int days) {
+    setState(() => _focusedDay = _focusedDay.add(Duration(days: days)));
+    widget.onPageChanged(_focusedDay);
+    HapticFeedback.selectionClick();
+  }
+
+  void _switchView(CalendarViewType type) {
+    if (_viewType != type) {
       HapticFeedback.selectionClick();
-      setState(() {
-        _viewType = newType;
-      });
+      setState(() => _viewType = type);
     }
   }
+}
+
+class _DayState {
+  final bool isSelected;
+  final bool isToday;
+  final bool isFuture;
+  final bool hasVideo;
+
+  const _DayState({
+    required this.isSelected,
+    required this.isToday,
+    required this.isFuture,
+    required this.hasVideo,
+  });
 }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/projects_provider.dart';
 import '../../providers/snippets_provider.dart';
 import '../../core/models/snippet.dart';
+import '../../core/models/project.dart';
 import '../../core/theme/tokens.dart';
 import '../../widgets/date_video_display.dart';
 import '../../widgets/video_grid.dart';
@@ -50,47 +51,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
           return Column(
             children: [
-              // Header
-              Container(
-                decoration: const BoxDecoration(color: AppTokens.canvas),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppTokens.spaceMd),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back,
-                              color: AppTokens.ink),
-                          onPressed: () => context.pop(),
-                        ),
-                        Expanded(
-                          child: Text(
-                            project.name,
-                            style: AppTokens.cardTitle,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.file_download_outlined,
-                              color: AppTokens.ink),
-                          onPressed: () =>
-                              context.push('/export/${widget.projectId}'),
-                          tooltip: 'Export Project',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.more_horiz,
-                              color: AppTokens.ink),
-                          onPressed: () => _showProjectMenu(context, project),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              // Editorial header: title + meta + actions
+              _buildTopBar(project, snippets),
 
               // Calendar Section
-              Container(
-                padding: const EdgeInsets.all(AppTokens.spaceMd),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppTokens.spaceXl, 0,
+                    AppTokens.spaceXl, AppTokens.spaceSm),
                 child: DualCalendarView(
                   snippets: snippets,
                   selectedDay: _selectedDay,
@@ -107,14 +74,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 ),
               ),
 
-              // Legend
+              // Slim "has video" hint
               _buildLegend(),
+
+              const SizedBox(height: AppTokens.spaceXs),
+              const Divider(),
 
               // Content area
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(AppTokens.spaceMd),
+                  padding: const EdgeInsets.all(AppTokens.spaceXl),
                   child: _selectedDay != null
                       ? _buildDateContent(snippets)
                       : _buildOverviewContent(snippets),
@@ -135,44 +105,94 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
-  Widget _buildLegend() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMd),
-      padding: const EdgeInsets.all(AppTokens.spaceSm),
-      decoration: BoxDecoration(
-        color: AppTokens.surface,
-        borderRadius: BorderRadius.circular(AppTokens.radiusLg),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildLegendItem(color: AppTokens.ink, label: 'Today'),
-          _buildLegendItem(color: AppTokens.brandCoral, label: 'Has Video'),
-          _buildLegendItem(color: AppTokens.hairline, label: 'No Video'),
-        ],
+  Widget _buildTopBar(Project project, List<Snippet> snippets) {
+    final isTimeline = project.type == ProjectType.timeline;
+    final typeLabel = isTimeline ? 'Timeline' : 'Freestyle';
+    final count = snippets.length;
+    final countLabel = count == 1 ? '1 moment' : '$count moments';
+
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(AppTokens.spaceSm,
+            AppTokens.spaceXs, AppTokens.spaceSm, AppTokens.spaceMd),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Action row
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: AppTokens.ink),
+                  onPressed: () => context.pop(),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () =>
+                      context.push('/export/${widget.projectId}'),
+                  icon: const Icon(Icons.file_download_outlined, size: 18),
+                  label: const Text('Export'),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.more_horiz, color: AppTokens.ink),
+                  onPressed: () => _showProjectMenu(context, project),
+                ),
+              ],
+            ),
+            // Title + meta
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.spaceXs),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    project.name,
+                    style: AppTokens.headingMd.copyWith(color: AppTokens.ink),
+                  ),
+                  const SizedBox(height: AppTokens.spaceXs),
+                  Row(
+                    children: [
+                      Icon(
+                        isTimeline
+                            ? Icons.timeline
+                            : Icons.video_collection_outlined,
+                        size: 15,
+                        color: AppTokens.brandCoral,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$typeLabel  ·  $countLabel',
+                        style: AppTokens.bodySm
+                            .copyWith(color: AppTokens.slate),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLegendItem({required Color color, required String label}) {
+  Widget _buildLegend() {
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
+          width: 5,
+          height: 5,
+          decoration: const BoxDecoration(
+            color: AppTokens.brandCoral,
             shape: BoxShape.circle,
           ),
         ),
         const SizedBox(width: 6),
         Text(
-          label,
-          style: AppTokens.micro.copyWith(
-            color: AppTokens.slate,
-            fontWeight: FontWeight.w500,
-          ),
+          'days with a moment',
+          style: AppTokens.micro.copyWith(color: AppTokens.stone),
         ),
       ],
     );
